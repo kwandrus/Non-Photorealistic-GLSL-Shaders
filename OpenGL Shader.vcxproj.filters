@@ -26,31 +26,34 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="shader.h">
+    <ClInclude Include="Headers\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="filesystem.h">
+    <ClInclude Include="Headers\filesystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image.h">
+    <ClInclude Include="Headers\mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="root_directory.h">
+    <ClInclude Include="Headers\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="model.h">
+    <ClInclude Include="Headers\root_directory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mesh.h">
+    <ClInclude Include="Headers\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Shader.frag">
+    <None Include="Shaders\Shader.frag">
       <Filter>Source Files</Filter>
-    </Text>
-    <Text Include="Shader.vert">
+    </None>
+    <None Include="Shaders\Shader.vert">
       <Filter>Source Files</Filter>
-    </Text>
+    </None>
   </ItemGroup>
 </Project>

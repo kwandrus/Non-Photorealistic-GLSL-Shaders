@@ -155,26 +155,19 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stb_image.cpp" />
-    <Text Include="Shader.frag">
-      <FileType>Document</FileType>
-    </Text>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="filesystem.h" />
-    <ClInclude Include="mesh.h" />
-    <ClInclude Include="model.h" />
-    <ClInclude Include="root_directory.h" />
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Headers\camera.h" />
+    <ClInclude Include="Headers\filesystem.h" />
+    <ClInclude Include="Headers\mesh.h" />
+    <ClInclude Include="Headers\model.h" />
+    <ClInclude Include="Headers\root_directory.h" />
+    <ClInclude Include="Headers\shader.h" />
+    <ClInclude Include="Headers\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Shader.vert">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <FileType>Document</FileType>
-    </Text>
+    <None Include="Shaders\Shader.frag" />
+    <None Include="Shaders\Shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
