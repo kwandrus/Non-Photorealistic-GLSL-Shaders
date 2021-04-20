@@ -1,0 +1,4 @@
+for glfw and glad, window setup
+https://learnopengl.com/book/book_pdf.pdf
+
+https://github.com/rosswarren/OpenGL-Solitaire/blob/master/main.cpp
