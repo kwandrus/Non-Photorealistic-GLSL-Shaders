@@ -173,6 +173,7 @@ private:
     vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
     {
         vector<Texture> textures;
+        int num = mat->GetTextureCount(type);
         for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
         {
             aiString str;
@@ -225,6 +226,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
             format = GL_RGBA;
 
         glBindTexture(GL_TEXTURE_2D, textureID);
+        //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 

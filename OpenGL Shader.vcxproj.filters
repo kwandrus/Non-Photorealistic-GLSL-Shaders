@@ -47,12 +47,27 @@
     <ClInclude Include="Headers\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Shader.frag">
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\Shader.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\Light_source.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\Light_source.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\Phong_lighting.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\Phong_lighting.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
