@@ -143,8 +143,8 @@ int main(int argc, char** argv)
 	unsigned int VBO, lightSourceVAO;
 	glGenVertexArrays(1, &lightSourceVAO);
 	glGenBuffers(1, &VBO);
-
 	glBindVertexArray(lightSourceVAO);
+
 	// load data into vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lightSourceVertices), lightSourceVertices, GL_STATIC_DRAW);
