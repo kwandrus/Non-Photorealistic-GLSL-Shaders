@@ -181,6 +181,7 @@ int main(int argc, char** argv)
 		glm::mat4 view = camera.GetViewMatrix();
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f));
 		//glm::mat3 normalMatrix = mat3(transpose(inverse(model)));
 
 		// activate shader before setting uniforms
@@ -205,8 +206,8 @@ int main(int argc, char** argv)
 			backpackModel.Draw(toonShader);
 			break;
 
-		case 2:
-		case 3:
+		case 2: // gooch shader
+		case 3: // hatching shader
 		default: // phong shader
 			phongShader.use();
 			//phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
@@ -237,9 +238,16 @@ int main(int argc, char** argv)
 		lightSourceShader.use();
 		lightSourceShader.setMat4("projection", projection);
 		lightSourceShader.setMat4("view", view);
+
+		// rotate light around y axis of the displayed object at the origin
+		const float radius = 4.0f;
+		lightPos.x = sin(glfwGetTime() / 1.5f) * radius;
+		lightPos.z = cos(glfwGetTime() / 1.5f) * radius;
 		model = glm::mat4(1.0f);
+		//model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 1.0, 0.0));
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		//model = glm::translate(model, glm::vec3(0.0f));
 		lightSourceShader.setMat4("model", model);
 
 		glBindVertexArray(lightSourceVAO);
