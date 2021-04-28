@@ -1,5 +1,4 @@
 // Fragment Shader - Phong Shading
-
 #version 330 core
 out vec4 FragColor;
 

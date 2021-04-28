@@ -76,5 +76,8 @@
     <None Include="Shaders\toon.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\Display_normals.geom">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

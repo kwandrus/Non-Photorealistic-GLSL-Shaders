@@ -34,8 +34,11 @@ float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 // timing
+float currentFrame = 0.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+bool paused = false;
+float pausedFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
@@ -142,43 +145,66 @@ int main(int argc, char** argv)
 	};
 
 	// configure light source cube VAO and VBO
+	// ---------------------------------
 	unsigned int VBO, lightSourceVAO;
 	glGenVertexArrays(1, &lightSourceVAO);
 	glGenBuffers(1, &VBO);
 	glBindVertexArray(lightSourceVAO);
-
 	// load data into vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lightSourceVertices), lightSourceVertices, GL_STATIC_DRAW);
-
 	// set the vertex attribute pointers
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 
 	// configure uniform buffer objects for each shader program
+	// ---------------------------------
+	// first. We get the relevant block indices
+	unsigned int uniformBlockIndexPhong = glGetUniformBlockIndex(phongShader.ID, "Matrices");
+	unsigned int uniformBlockIndexToon = glGetUniformBlockIndex(toonShader.ID, "Matrices");
+	unsigned int uniformBlockIndexLightSource = glGetUniformBlockIndex(lightSourceShader.ID, "Matrices");
+	// then we link each shader's uniform block to this uniform binding point
+	glUniformBlockBinding(phongShader.ID, uniformBlockIndexPhong, 0);
+	glUniformBlockBinding(toonShader.ID, uniformBlockIndexToon, 0);
+	glUniformBlockBinding(lightSourceShader.ID, uniformBlockIndexLightSource, 0);
+	// Now actually create the buffer
+	unsigned int uboMatrices;
+	glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	// define the range of the buffer that links to a uniform binding point
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
 
-
+	// store the projection matrix (we only do this once now)
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
-
 		// per-frame time logic
 		// --------------------
-		float currentFrame = glfwGetTime();
+		currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
 		processInput(window);
 
 		// render
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);	// Set background color to black and opaque
+		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);	// Set background color to black and opaque
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		// set the view matrix in the uniform block - we only have to do this once per loop iteration.
 		glm::mat4 view = camera.GetViewMatrix();
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f));
@@ -189,20 +215,10 @@ int main(int argc, char** argv)
 		{
 		case 1: // toon shader
 			toonShader.use();
-
-			// view/projection transformations
-			//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-			//glm::mat4 view = camera.GetViewMatrix();
-			toonShader.setMat4("projection", projection);
-			toonShader.setMat4("view", view);
-
-			// world transformation
-			//glm::mat4 model = glm::mat4(1.0f);
+			// set uniforms
 			toonShader.setMat4("model", model);
-
 			toonShader.setVec3("lightPos", lightPos);
 			toonShader.setVec3("viewPos", camera.Position);
-
 			backpackModel.Draw(toonShader);
 			break;
 
@@ -210,46 +226,29 @@ int main(int argc, char** argv)
 		case 3: // hatching shader
 		default: // phong shader
 			phongShader.use();
-			//phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+			// set uniforms
+			phongShader.setMat4("model", model);
 			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("viewPos", camera.Position);
-
-			// view/projection transformations
-			//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-			//glm::mat4 view = camera.GetViewMatrix();
-			phongShader.setMat4("projection", projection);
-			phongShader.setMat4("view", view);
-
-			// world transformation
-			//glm::mat4 model = glm::mat4(1.0f);
-			phongShader.setMat4("model", model);
-
-			// render the loaded model
-			//glm::mat4 model = glm::mat4(1.0f);
-			//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-			//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-			//ourShader.setMat4("model", model);
 			backpackModel.Draw(phongShader);
 		}
-		
 
 		// render the light source
 		lightSourceShader.use();
-		lightSourceShader.setMat4("projection", projection);
-		lightSourceShader.setMat4("view", view);
-
+		/*lightSourceShader.setMat4("projection", projection);
+		lightSourceShader.setMat4("view", view);*/
 		// rotate light around y axis of the displayed object at the origin
-		const float radius = 4.0f;
-		lightPos.x = sin(glfwGetTime() / 1.5f) * radius;
-		lightPos.z = cos(glfwGetTime() / 1.5f) * radius;
+		const float radius = 3.0f;
+		if (!paused)
+		{
+			lightPos.x = sin(currentFrame / 1.5f) * radius;
+			lightPos.z = cos(currentFrame / 1.5f) * radius;
+		}
 		model = glm::mat4(1.0f);
-		//model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 1.0, 0.0));
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-		//model = glm::translate(model, glm::vec3(0.0f));
 		lightSourceShader.setMat4("model", model);
-
 		glBindVertexArray(lightSourceVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -258,9 +257,10 @@ int main(int argc, char** argv)
 		glfwSwapBuffers(window);
 	}
 
-	// deallocate all resour es
+	// deallocate all resources
 	glDeleteVertexArrays(1, &lightSourceVAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &uboMatrices);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	glfwTerminate();
@@ -288,6 +288,20 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		if (paused == false)
+		{
+			paused = true;
+			pausedFrame = lastFrame;
+		}
+		else
+		{
+			paused = false;
+			glfwSetTime(pausedFrame);
+		}
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		activeShaderID = 1;
