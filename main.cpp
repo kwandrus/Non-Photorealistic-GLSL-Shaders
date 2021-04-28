@@ -25,6 +25,7 @@ void processInput(GLFWwindow* window);
 // global variables
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int activeShaderID = 0; // default - phong shader
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -88,6 +89,7 @@ int main(int argc, char** argv)
 	// ------------------------------------
 	Shader phongShader("Shaders/Phong_lighting.vert", "Shaders/Phong_lighting.frag");
 	Shader lightSourceShader("Shaders/Light_source.vert", "Shaders/Light_source.frag");
+	Shader toonShader("Shaders/toon.vert", "Shaders/toon.frag");
 	
 	// load models
 	// -----------
@@ -95,7 +97,7 @@ int main(int argc, char** argv)
 	Model backpackModel(FileSystem::getPath("Models/Backpack/backpack.obj"));
 	//Model ourModel(FileSystem::getPath("Models/Ravenors-Reading Corner/Ravenors-Reading Corner.obj"));
 
-	float lightSourceVertices[] = {
+	float lightSourceVertices[] = { // cube
 		-0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f, -0.5f,
 		 0.5f,  0.5f, -0.5f,
@@ -154,6 +156,9 @@ int main(int argc, char** argv)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 
+	// configure uniform buffer objects for each shader program
+
+
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -171,29 +176,62 @@ int main(int argc, char** argv)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);	// Set background color to black and opaque
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// activate shader before setting uniforms
-		phongShader.use();
-		phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-		phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-		phongShader.setVec3("lightPos", lightPos);
-		phongShader.setVec3("viewPos", camera.Position);
-
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		phongShader.setMat4("projection", projection);
-		phongShader.setMat4("view", view);
-
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
-		phongShader.setMat4("model", model);
+		//glm::mat3 normalMatrix = mat3(transpose(inverse(model)));
 
-		// render the loaded model
-		//glm::mat4 model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		//ourShader.setMat4("model", model);
-		backpackModel.Draw(phongShader);
+		// activate shader before setting uniforms
+		switch (activeShaderID)
+		{
+		case 1: // toon shader
+			toonShader.use();
+
+			// view/projection transformations
+			//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+			//glm::mat4 view = camera.GetViewMatrix();
+			toonShader.setMat4("projection", projection);
+			toonShader.setMat4("view", view);
+
+			// world transformation
+			//glm::mat4 model = glm::mat4(1.0f);
+			toonShader.setMat4("model", model);
+
+			toonShader.setVec3("lightPos", lightPos);
+			toonShader.setVec3("viewPos", camera.Position);
+
+			backpackModel.Draw(toonShader);
+			break;
+
+		case 2:
+		case 3:
+		default: // phong shader
+			phongShader.use();
+			//phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+			phongShader.setVec3("lightPos", lightPos);
+			phongShader.setVec3("viewPos", camera.Position);
+
+			// view/projection transformations
+			//glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+			//glm::mat4 view = camera.GetViewMatrix();
+			phongShader.setMat4("projection", projection);
+			phongShader.setMat4("view", view);
+
+			// world transformation
+			//glm::mat4 model = glm::mat4(1.0f);
+			phongShader.setMat4("model", model);
+
+			// render the loaded model
+			//glm::mat4 model = glm::mat4(1.0f);
+			//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+			//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+			//ourShader.setMat4("model", model);
+			backpackModel.Draw(phongShader);
+		}
+		
 
 		// render the light source
 		lightSourceShader.use();
@@ -242,6 +280,11 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		activeShaderID = 1;
+	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		activeShaderID = 4;
 }
 
 // glfw: whenever the mouse moves, this callback is called

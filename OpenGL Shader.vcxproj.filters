@@ -70,5 +70,11 @@
     <None Include="Shaders\Phong_lighting.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\toon.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\toon.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
