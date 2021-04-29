@@ -13,7 +13,7 @@ layout(std140) uniform Matrices
 };
 
 uniform mat4 model;
-// uniform mat3 normalMatrix;
+uniform mat3 normalMatrix;
 
 void main()
 {
@@ -22,6 +22,5 @@ void main()
 	// convert FragPos to world space for lighting calculations in the frag shader
 	FragPos = vec3(model * vec4(aPos, 1.0));
 
-	// multiply by normal matrix
-	Normal = mat3(transpose(inverse(model))) * aNormal;
+	Normal = normalMatrix * aNormal;
 }

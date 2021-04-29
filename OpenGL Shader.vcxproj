@@ -167,7 +167,9 @@
     <ClInclude Include="light.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Display_normals.frag" />
     <None Include="Shaders\Display_normals.geom" />
+    <None Include="Shaders\Display_normals.vert" />
     <None Include="Shaders\Light_source.frag" />
     <None Include="Shaders\Light_source.vert" />
     <None Include="Shaders\Phong_lighting.frag" />

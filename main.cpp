@@ -26,6 +26,7 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 int activeShaderID = 0; // default - phong shader
+bool displayNormals = false;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -93,6 +94,7 @@ int main(int argc, char** argv)
 	Shader phongShader("Shaders/Phong_lighting.vert", "Shaders/Phong_lighting.frag");
 	Shader lightSourceShader("Shaders/Light_source.vert", "Shaders/Light_source.frag");
 	Shader toonShader("Shaders/toon.vert", "Shaders/toon.frag");
+	Shader normalShader("Shaders/Display_normals.vert", "Shaders/Display_normals.frag", "Shaders/Display_normals.geom");
 	
 	// load models
 	// -----------
@@ -177,7 +179,7 @@ int main(int argc, char** argv)
 	// define the range of the buffer that links to a uniform binding point
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
 
-	// store the projection matrix (we only do this once now)
+	// store the projection matrix (we only have to do this once)
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
@@ -208,7 +210,7 @@ int main(int argc, char** argv)
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f));
-		//glm::mat3 normalMatrix = mat3(transpose(inverse(model)));
+		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(model)));
 
 		// activate shader before setting uniforms
 		switch (activeShaderID)
@@ -217,8 +219,10 @@ int main(int argc, char** argv)
 			toonShader.use();
 			// set uniforms
 			toonShader.setMat4("model", model);
+			toonShader.setMat3("normalMatrix", normalMatrix);
 			toonShader.setVec3("lightPos", lightPos);
 			toonShader.setVec3("viewPos", camera.Position);
+			// render model
 			backpackModel.Draw(toonShader);
 			break;
 
@@ -228,16 +232,27 @@ int main(int argc, char** argv)
 			phongShader.use();
 			// set uniforms
 			phongShader.setMat4("model", model);
+			phongShader.setMat3("normalMatrix", normalMatrix);
 			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("viewPos", camera.Position);
+			// render model
 			backpackModel.Draw(phongShader);
+		}
+
+		if (displayNormals)
+		{
+			// then draw model with normal visualizing geometry shader
+			normalShader.use();
+			normalShader.setMat4("projection", projection);
+			normalShader.setMat4("view", view);
+			normalShader.setMat4("model", model);
+			// render model
+			backpackModel.Draw(normalShader);
 		}
 
 		// render the light source
 		lightSourceShader.use();
-		/*lightSourceShader.setMat4("projection", projection);
-		lightSourceShader.setMat4("view", view);*/
 		// rotate light around y axis of the displayed object at the origin
 		const float radius = 3.0f;
 		if (!paused)
@@ -307,6 +322,8 @@ void processInput(GLFWwindow* window)
 		activeShaderID = 1;
 	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
 		activeShaderID = 4;
+	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		displayNormals = !displayNormals;
 }
 
 // glfw: whenever the mouse moves, this callback is called

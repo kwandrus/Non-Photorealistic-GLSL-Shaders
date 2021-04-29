@@ -79,5 +79,11 @@
     <None Include="Shaders\Display_normals.geom">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\Display_normals.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\Display_normals.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
