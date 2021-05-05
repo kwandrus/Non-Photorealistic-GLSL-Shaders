@@ -58,34 +58,34 @@
     <None Include="Shaders\Shader.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Light_source.vert">
+    <None Include="Shaders\LightSource.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Light_source.frag">
+    <None Include="Shaders\LightSource.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Phong_lighting.frag">
+    <None Include="Shaders\PhongLighting.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Phong_lighting.vert">
+    <None Include="Shaders\PhongLighting.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\toon.frag">
+    <None Include="Shaders\FlatToonShading.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\toon.vert">
+    <None Include="Shaders\FlatToonShading.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Display_normals.geom">
+    <None Include="Shaders\DisplayNormals.geom">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Display_normals.frag">
+    <None Include="Shaders\DisplayNormals.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\Display_normals.vert">
+    <None Include="Shaders\DisplayNormals.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\toon2.frag">
+    <None Include="Shaders\ToonShading.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

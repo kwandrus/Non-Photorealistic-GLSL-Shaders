@@ -92,11 +92,10 @@ int main(int argc, char** argv)
 
 	/// build and compile our shader program
 	// ------------------------------------
-	Shader phongShader("Shaders/Phong_lighting.vert", "Shaders/Phong_lighting.frag");
-	Shader lightSourceShader("Shaders/Light_source.vert", "Shaders/Light_source.frag");
-	//Shader toonShader("Shaders/toon.vert", "Shaders/toon.frag");
-	Shader toonShader("Shaders/Phong_lighting.vert", "Shaders/toon2.frag");
-	Shader normalShader("Shaders/Display_normals.vert", "Shaders/Display_normals.frag", "Shaders/Display_normals.geom");
+	Shader phongShader("Shaders/PhongLighting.vert", "Shaders/PhongLighting.frag");
+	Shader lightSourceShader("Shaders/LightSource.vert", "Shaders/LightSource.frag");
+	Shader toonShader("Shaders/PhongLighting.vert", "Shaders/ToonShading.frag");
+	Shader normalShader("Shaders/DisplayNormals.vert", "Shaders/DisplayNormals.frag", "Shaders/DisplayNormals.geom");
 	
 	// load models
 	// -----------
@@ -230,9 +229,15 @@ int main(int argc, char** argv)
 			backpackModel.Draw(toonShader);
 			break;
 
-		case 2: // gooch shader
+		case 2: // Gooch shader
+			// First pass: Render the model using Gooch shading, and render the camera-space normals to a second render target
+
+			// Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
+
+			break;
+
 		case 3: // hatching shader
-		default: // phong shader
+		default: // Phong shader
 			phongShader.use();
 			// set uniforms
 			phongShader.setMat4("model", model);
@@ -328,13 +333,16 @@ void processInput(GLFWwindow* window)
 		activeShaderID = 1;
 		texturesToggle = true;
 	}
-		
-	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) // phong shading
+	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) // Gooch shading
+	{
+		activeShaderID = 2;
+	}
+	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) // Phong shading
 	{
 		activeShaderID = 4;
 		texturesToggle = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) // toggle textures
 		texturesToggle = !texturesToggle;
 	if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
 		displayNormals = !displayNormals;
