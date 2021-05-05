@@ -85,5 +85,8 @@
     <None Include="Shaders\Display_normals.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\toon2.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

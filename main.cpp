@@ -27,6 +27,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 int activeShaderID = 0; // default - phong shader
 bool displayNormals = false;
+bool texturesToggle = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -93,7 +94,8 @@ int main(int argc, char** argv)
 	// ------------------------------------
 	Shader phongShader("Shaders/Phong_lighting.vert", "Shaders/Phong_lighting.frag");
 	Shader lightSourceShader("Shaders/Light_source.vert", "Shaders/Light_source.frag");
-	Shader toonShader("Shaders/toon.vert", "Shaders/toon.frag");
+	//Shader toonShader("Shaders/toon.vert", "Shaders/toon.frag");
+	Shader toonShader("Shaders/Phong_lighting.vert", "Shaders/toon2.frag");
 	Shader normalShader("Shaders/Display_normals.vert", "Shaders/Display_normals.frag", "Shaders/Display_normals.geom");
 	
 	// load models
@@ -222,6 +224,8 @@ int main(int argc, char** argv)
 			toonShader.setMat3("normalMatrix", normalMatrix);
 			toonShader.setVec3("lightPos", lightPos);
 			toonShader.setVec3("viewPos", camera.Position);
+			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+			toonShader.setBool("texturesToggle", texturesToggle);
 			// render model
 			backpackModel.Draw(toonShader);
 			break;
@@ -236,13 +240,14 @@ int main(int argc, char** argv)
 			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("viewPos", camera.Position);
+			phongShader.setBool("texturesToggle", texturesToggle);
 			// render model
 			backpackModel.Draw(phongShader);
 		}
 
 		if (displayNormals)
 		{
-			// then draw model with normal visualizing geometry shader
+			// draw model with normal visualizing geometry shader
 			normalShader.use();
 			normalShader.setMat4("projection", projection);
 			normalShader.setMat4("view", view);
@@ -318,11 +323,20 @@ void processInput(GLFWwindow* window)
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) // toon shading
+	{
 		activeShaderID = 1;
-	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		texturesToggle = true;
+	}
+		
+	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) // phong shading
+	{
 		activeShaderID = 4;
+		texturesToggle = true;
+	}
 	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		texturesToggle = !texturesToggle;
+	if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
 		displayNormals = !displayNormals;
 }
 

@@ -178,6 +178,7 @@
     <None Include="Shaders\Shader.vert" />
     <None Include="Shaders\toon.frag" />
     <None Include="Shaders\toon.vert" />
+    <None Include="Shaders\toon2.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

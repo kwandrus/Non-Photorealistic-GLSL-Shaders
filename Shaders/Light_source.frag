@@ -1,5 +1,4 @@
-// Fragment Shader - Light Source
-
+// Light Source - Fragment Shader
 #version 330 core
 out vec4 FragColor;
 
