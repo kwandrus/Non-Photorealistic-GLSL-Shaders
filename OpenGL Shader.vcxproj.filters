@@ -67,13 +67,10 @@
     <None Include="Shaders\PhongLighting.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\PhongLighting.vert">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="Shaders\FlatToonShading.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Shaders\FlatToonShading.vert">
+    <None Include="Shaders\default.vert">
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\DisplayNormals.geom">
@@ -86,6 +83,15 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\ToonShading.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\GoochShading.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\RenderQuad.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\SobelOutline.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

@@ -167,17 +167,19 @@
     <ClInclude Include="light.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\SobelOutline.frag" />
     <None Include="Shaders\DisplayNormals.frag" />
     <None Include="Shaders\DisplayNormals.geom" />
     <None Include="Shaders\DisplayNormals.vert" />
+    <None Include="Shaders\RenderQuad.vert" />
+    <None Include="Shaders\GoochShading.frag" />
     <None Include="Shaders\LightSource.frag" />
     <None Include="Shaders\LightSource.vert" />
     <None Include="Shaders\PhongLighting.frag" />
-    <None Include="Shaders\PhongLighting.vert" />
     <None Include="Shaders\Shader.frag" />
     <None Include="Shaders\Shader.vert" />
     <None Include="Shaders\FlatToonShading.frag" />
-    <None Include="Shaders\FlatToonShading.vert" />
+    <None Include="Shaders\default.vert" />
     <None Include="Shaders\ToonShading.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
