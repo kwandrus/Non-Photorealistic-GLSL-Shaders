@@ -29,7 +29,7 @@ void main()
 	float diff = dot(norm, lightDir);
 	float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
 
-	vec3 diffuse = diffToon * lightColor;
+	vec3 toonColor = diffToon * lightColor;
 
 	// specular
 	float specularStrength = 0.5;
@@ -38,15 +38,15 @@ void main()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 
-	// vec3 result = ambient + diffuse + specular;
+	// vec3 result = ambient + toonColor + specular;
 	// FragColor = vec4(result, 1.0) * texture(texture_diffuse1, TexCoords);
 
 	if (texturesToggle)
 	{
-		FragColor = vec4(diffuse, 1.0) * texture(texture_diffuse1, TexCoords);
+		FragColor = vec4(toonColor, 1.0) * texture(texture_diffuse1, TexCoords);
 	}
 	else
 	{
-		FragColor = vec4(diffuse, 1.0);
+		FragColor = vec4(toonColor, 1.0);
 	}
 }

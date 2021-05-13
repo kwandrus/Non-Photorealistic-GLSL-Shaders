@@ -9,11 +9,14 @@ in vec3 Normal;
 in vec3 FragPos;
 
 uniform vec3 lightPos;
+uniform vec3 viewPos;
 uniform vec3 coolColor;
 uniform vec3 warmColor;
 uniform vec3 objectColor;
-uniform float alpha;
-uniform float beta;
+uniform vec3 lightColor;
+uniform float specularStrength = 0.5;
+uniform float alpha = 0.0;
+uniform float beta = 0.0;
 
 void main()
 {
@@ -27,10 +30,16 @@ void main()
 
 	float lerp = (1.0 + diff) / 2.0;
 
-	finalCool = lerp * finalCool;
-	finalWarm = (1 - lerp) * finalWarm;
+	finalCool = (1- lerp) * finalCool;
+	finalWarm = lerp * finalWarm;
 
-	FragColor = vec4(finalCool + finalWarm, 1.0);
+	// specular
+	vec3 viewDir = normalize(viewPos - FragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * spec * lightColor;
+
+	FragColor = vec4(finalCool + finalWarm + specular, 1.0);
 	normalOut = vec4(Normal, 0.0);
 	depthOut = vec4(FragPos.z, 0.0, 0.0, 0.0);
 }

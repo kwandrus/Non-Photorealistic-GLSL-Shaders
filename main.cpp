@@ -20,7 +20,8 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
+void processMovement(GLFWwindow* window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 unsigned int prepareFBO(int w, int h, int colorCount, unsigned int* rbs);
 
 
@@ -30,6 +31,9 @@ const unsigned int SCR_HEIGHT = 600;
 int activeShaderID = 0; // default - phong shader
 bool displayNormals = false;
 bool texturesToggle = true;
+std::vector<Model*> modelsList;
+int vectorIndex = 0;
+Model* modelToRender;
 
 // camera
 Camera camera(glm::vec3(0.0f, 1.5f, 10.0f));
@@ -41,8 +45,9 @@ bool firstMouse = true;
 float currentFrame = 0.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-bool paused = true;
+bool paused = false;
 float pausedFrame = 0.0f;
+float rotationTime = 0.0f;
 
 // lighting
 glm::vec3 lightPos(3.0f, 4.0f, 2.0f);
@@ -56,6 +61,8 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -73,9 +80,12 @@ int main(int argc, char** argv)
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetKeyCallback(window, key_callback);
 
 	// tell GLFW to capture our mouse
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	// initialize glad: load all OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -90,6 +100,7 @@ int main(int argc, char** argv)
 	// configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
 
 
 	/// build and compile our shader program
@@ -105,9 +116,13 @@ int main(int argc, char** argv)
 	// load models
 	// -----------
 	//Model ourModel(FileSystem::getPath("Models/nanosuit/nanosuit.obj"));
-	Model backpackModel(FileSystem::getPath("Models/Backpack/backpack.obj"));
 	Model teapotModel(FileSystem::getPath("Models/teapot.obj"));
+	Model backpackModel(FileSystem::getPath("Models/Backpack/backpack.obj"));
 	//Model ourModel(FileSystem::getPath("Models/Ravenors-Reading Corner/Ravenors-Reading Corner.obj"));
+	modelsList.push_back(&teapotModel);
+	modelsList.push_back(&backpackModel);
+
+	modelToRender = modelsList[0];
 
 	float lightSourceVertices[] = { // cube
 		-0.5f, -0.5f, -0.5f,
@@ -220,7 +235,7 @@ int main(int argc, char** argv)
 	glGenTextures(1, &textureImage);
 	glGenTextures(1, &textureNormal);
 	glGenTextures(1, &textureDepth);
-	GLuint renderTargets[3] = { textureImage, textureNormal, textureDepth };
+	GLuint renderTargets[3] = { textureImage, textureNormal, textureDepth }; // G buffers
 	FBO = prepareFBO(SCR_WIDTH, SCR_HEIGHT, 3, renderTargets);
 
 
@@ -234,9 +249,6 @@ int main(int argc, char** argv)
 	sobelShader.setInt("textureImage", 0);
 	sobelShader.setInt("textureNormal", 1);
 	sobelShader.setInt("textureDepth", 2);
-	/*sobelShader.use();
-	sobelShader.setInt("textureNormal", 0);
-	sobelShader.setInt("textureImage", 1);*/
 
 
 
@@ -249,7 +261,8 @@ int main(int argc, char** argv)
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		processInput(window);
+		//processInput(window, &modelToRender);
+		processMovement(window);
 
 		// render
 		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -263,12 +276,15 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		// world transformation
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f));
-		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(model)));
+		glm::mat4 modelMatrix = glm::mat4(1.0f);
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f));
+		if (!paused)
+			rotationTime = (float)glfwGetTime();
+		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
 		// assign render targets for FBO
-		GLuint GBuffer[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		GLuint GBuffers[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 
 		// activate shader before setting uniforms
 		switch (activeShaderID)
@@ -276,14 +292,14 @@ int main(int argc, char** argv)
 		case 1: // toon shader
 			toonShader.use();
 			// set uniforms
-			toonShader.setMat4("model", model);
+			toonShader.setMat4("model", modelMatrix);
 			toonShader.setMat3("normalMatrix", normalMatrix);
 			toonShader.setVec3("lightPos", lightPos);
 			toonShader.setVec3("viewPos", camera.Position);
 			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			toonShader.setBool("texturesToggle", texturesToggle);
 			// render model
-			teapotModel.Draw(toonShader);
+			modelToRender->Draw(toonShader);
 			break;
 
 		case 2: // Gooch shader
@@ -291,7 +307,7 @@ int main(int argc, char** argv)
 				glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 			
 				// enable 3 render targets for drawing and clear buffers
-				glDrawBuffers(3, GBuffer);
+				glDrawBuffers(3, GBuffers);
 				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -305,21 +321,24 @@ int main(int argc, char** argv)
 				glClear(GL_COLOR_BUFFER_BIT);
 
 				// now enable all render targets again for drawing
-				glDrawBuffers(3, GBuffer);
+				glDrawBuffers(3, GBuffers);
 
 				// First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to a other render targets
 				goochShader.use();
 				// set uniforms
-				goochShader.setMat4("model", model);
+				goochShader.setMat4("model", modelMatrix);
 				goochShader.setMat3("normalMatrix", normalMatrix);
 				goochShader.setVec3("lightPos", lightPos);
-				goochShader.setVec3("coolColor", 0.0f, 0.0f, 0.4f);
-				goochShader.setVec3("warmColor", 0.4f, 0.4f, 0.0f);
-				goochShader.setVec3("objectColor", 1.0f, 0.0f, 0.0f);
-				goochShader.setFloat("alpha", 0.2f);
-				goochShader.setFloat("beta", 0.6f);
+				goochShader.setVec3("viewPos", camera.Position);
+				goochShader.setVec3("coolColor", 0.0f, 0.0f, 0.55f);
+				goochShader.setVec3("warmColor", 0.3f, 0.3f, 0.0f);
+				goochShader.setVec3("objectColor", 1.0f, 1.0f, 1.0f);
+				goochShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+				goochShader.setFloat("specularStrength", 0.5f);
+				goochShader.setFloat("alpha", 0.25f);
+				goochShader.setFloat("beta", 0.5f);
 				// render model
-				teapotModel.Draw(goochShader);
+				modelToRender->Draw(goochShader);
 
 			// Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
 			// bind back to default framebuffer and draw a quad plane with the attached framebuffer color textures
@@ -363,7 +382,7 @@ int main(int argc, char** argv)
 			texturesToggle = false;
 			phongShader.use();
 			// set uniforms
-			phongShader.setMat4("model", model);
+			phongShader.setMat4("model", modelMatrix);
 			phongShader.setMat3("normalMatrix", normalMatrix);
 			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			phongShader.setVec3("lightPos", lightPos);
@@ -371,7 +390,7 @@ int main(int argc, char** argv)
 			phongShader.setVec3("viewPos", camera.Position);
 			phongShader.setBool("texturesToggle", texturesToggle);
 			// render model
-			teapotModel.Draw(phongShader);
+			modelToRender->Draw(phongShader);
 		}
 
 		if (displayNormals)
@@ -380,24 +399,24 @@ int main(int argc, char** argv)
 			normalShader.use();
 			normalShader.setMat4("projection", projection);
 			normalShader.setMat4("view", view);
-			normalShader.setMat4("model", model);
+			normalShader.setMat4("model", modelMatrix);
 			// render model
-			teapotModel.Draw(normalShader);
+			modelToRender->Draw(normalShader);
 		}
 
 		// render the light source
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
 		const float radius = 4.0f;
-		if (!paused)
+		/*if (!paused)
 		{
 			lightPos.x = sin(currentFrame / 1.5f) * radius;
 			lightPos.z = cos(currentFrame / 1.5f) * radius;
-		}
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-		lightSourceShader.setMat4("model", model);
+		}*/
+		glm::mat4 modelMatrixLight = glm::mat4(1.0f);
+		modelMatrixLight = glm::translate(modelMatrixLight, lightPos);
+		modelMatrixLight = glm::scale(modelMatrixLight, glm::vec3(0.2f)); // a smaller cube
+		lightSourceShader.setMat4("model", modelMatrixLight);
 		glBindVertexArray(lightSourceVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -425,12 +444,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-
-void processInput(GLFWwindow* window)
+void processMovement(GLFWwindow* window)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -443,8 +458,16 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
+}
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+
+//void processInput(GLFWwindow* window, Model** modelToRender)
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 		if (paused == false)
 		{
@@ -458,24 +481,34 @@ void processInput(GLFWwindow* window)
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) // toon shading
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS) // toon shading
 	{
 		activeShaderID = 1;
-		texturesToggle = true;
+		//texturesToggle = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) // Gooch shading
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS) // Gooch shading
 	{
 		activeShaderID = 2;
 	}
-	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) // Phong shading
+	if (key == GLFW_KEY_4 && action == GLFW_PRESS) // Phong shading
 	{
 		activeShaderID = 4;
 		texturesToggle = true;
 	}
-	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) // toggle textures
+	if (key == GLFW_KEY_5 && action == GLFW_PRESS) // toggle textures
 		texturesToggle = !texturesToggle;
-	if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+	if (key == GLFW_KEY_6 && action == GLFW_PRESS) // toggle normals displayed
 		displayNormals = !displayNormals;
+
+	if (key == GLFW_KEY_0 && action == GLFW_PRESS)
+	{
+		vectorIndex++;
+
+		if (vectorIndex > modelsList.size() - 1)
+			vectorIndex = 0;
+
+		modelToRender = modelsList[vectorIndex];
+	}
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -523,6 +556,7 @@ GLuint prepareFBO(int w, int h, int colorCount, GLuint* renderTargets) {
 		//unsigned int tex;
 		//glGenTextures(1, &rbs[i]);
 		glBindTexture(GL_TEXTURE_2D, renderTargets[i]);
+		//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderTargets[i]);
 
 		//if (i == 0) // if image texture
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, whiteTexture);

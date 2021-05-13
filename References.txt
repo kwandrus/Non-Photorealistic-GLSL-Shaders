@@ -2,3 +2,12 @@ for glfw and glad, window setup
 https://learnopengl.com/book/book_pdf.pdf
 
 https://github.com/rosswarren/OpenGL-Solitaire/blob/master/main.cpp
+
+Gooch Shading
+
+
+Sobel Filter and Edge Detection
+https://gamedev.stackexchange.com/questions/68401/how-can-i-draw-outlines-around-3d-models
+https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
+https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
+https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge-detection-filter

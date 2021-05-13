@@ -12,6 +12,7 @@ uniform sampler2D texture_diffuse1;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
+uniform float specularStrength;
 uniform bool texturesToggle;
 uniform vec3 objectColor;
 
@@ -29,7 +30,6 @@ void main()
 	vec3 diffuse = diff * lightColor;
 
 	// specular
-	float specularStrength = 0.5;
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
