@@ -4,7 +4,8 @@ https://learnopengl.com/book/book_pdf.pdf
 https://github.com/rosswarren/OpenGL-Solitaire/blob/master/main.cpp
 
 Gooch Shading
-
+https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf
+https://rendermeapangolin.wordpress.com/2015/05/07/gooch-shading/
 
 Sobel Filter and Edge Detection
 https://gamedev.stackexchange.com/questions/68401/how-can-i-draw-outlines-around-3d-models

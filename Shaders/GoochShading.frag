@@ -30,7 +30,7 @@ void main()
 
 	float lerp = (1.0 + diff) / 2.0;
 
-	finalCool = (1- lerp) * finalCool;
+	finalCool = (1 - lerp) * finalCool;
 	finalWarm = lerp * finalWarm;
 
 	// specular

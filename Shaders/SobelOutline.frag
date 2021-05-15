@@ -5,9 +5,9 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
-uniform sampler2D textureImage;
-uniform sampler2D textureNormal;
-uniform sampler2D textureDepth;
+uniform sampler2D imageTexture;
+uniform sampler2D normalTexture;
+uniform sampler2D depthTexture;
 
 uniform float _OutlineThickness;
 uniform float _OutlineDepthMultiplier;
@@ -25,7 +25,7 @@ float CalculateDepthGradient()
 	// fetch the 3x3 neighbourhood
 	for (int i=0; i<3; i++)
 	for (int j=0; j<3; j++) {
-		I[i][j] = texelFetch( textureDepth, ivec2(gl_FragCoord) + ivec2(i-1,j-1), 0 ).r;
+		I[i][j] = texelFetch( depthTexture, ivec2(gl_FragCoord) + ivec2(i-1,j-1), 0 ).r;
 	}
 
 	float center = I[1][1];
@@ -40,14 +40,14 @@ float CalculateNormalGradient()
 {
 	vec3 sample, gradient;
 	gradient = vec3(0.0,0.0,0.0);
-	vec3 center = texelFetch( textureNormal, ivec2(gl_FragCoord), 0 ).xyz;
+	vec3 center = texelFetch( normalTexture, ivec2(gl_FragCoord), 0 ).xyz;
 
 	// fetch the 3x3 neighbourhood and use the RGB vector's length as intensity value
 	for (int i=0; i<3; i++)
 	for (int j=0; j<3; j++) {
 		if (i != 1 && j != 1)
 		{
-			sample = texelFetch( textureNormal, ivec2(gl_FragCoord) + ivec2(i-1,j-1), 0 ).xyz;
+			sample = texelFetch( normalTexture, ivec2(gl_FragCoord) + ivec2(i-1,j-1), 0 ).xyz;
 			gradient += abs(sample - center);
 		}
 	}
@@ -59,13 +59,7 @@ float CalculateNormalGradient()
 void main(void)
 {
 	//float3 offset = float3((1.0 / _ScreenParams.x), (1.0 / _ScreenParams.y), 0.0) * _OutlineThickness;
-    vec3 sceneColor = texture(textureImage, TexCoords).rgb;
-
-	// since textureImage only includes information about the shaded model, we can assume
-	// a black RGB value means that this fragment is outside the model
-	// thus, change to white to be able to show black outline
-	if (sceneColor.r == 0.0 && sceneColor.g == 0.0 && sceneColor.b == 0.0)
-		sceneColor = vec3(1.0,1.0,1.0);
+    vec3 sceneColor = texture(imageTexture, TexCoords).rgb;
 
 	float sobelDepth = CalculateDepthGradient();
 	float sobelNormal = CalculateNormalGradient();

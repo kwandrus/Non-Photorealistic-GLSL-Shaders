@@ -22,12 +22,13 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processMovement(GLFWwindow* window);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-unsigned int prepareFBO(int w, int h, int colorCount, unsigned int* rbs);
+void configureFBO(GLuint* FBO, vector<GLuint*>* renderTargets, bool multiSample, bool depthOrStencil);
 
 
 // global variables
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int numSamples = 4;
 int activeShaderID = 0; // default - phong shader
 bool displayNormals = false;
 bool texturesToggle = true;
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, numSamples);
 
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -231,12 +232,27 @@ int main(int argc, char** argv)
 
 	// configure frame buffer objects
 	// ---------------------------------
-	GLuint FBO, textureNormal, textureImage, textureDepth;
-	glGenTextures(1, &textureImage);
-	glGenTextures(1, &textureNormal);
-	glGenTextures(1, &textureDepth);
-	GLuint renderTargets[3] = { textureImage, textureNormal, textureDepth }; // G buffers
-	FBO = prepareFBO(SCR_WIDTH, SCR_HEIGHT, 3, renderTargets);
+	GLuint FBO, imageTextureMS, normalTextureMS, depthTextureMS;
+	vector<GLuint*> renderTargets; // G buffers
+	glGenTextures(1, &imageTextureMS);
+	renderTargets.push_back(&imageTextureMS);
+	glGenTextures(1, &normalTextureMS);
+	renderTargets.push_back(&normalTextureMS);
+	glGenTextures(1, &depthTextureMS);
+	renderTargets.push_back(&depthTextureMS);
+	//FBO = prepareFBO(renderTargets, true, true);
+	configureFBO(&FBO, &renderTargets, true, true);
+
+	GLuint intermediateFBO, imageTexture, normalTexture, depthTexture;
+	vector<GLuint*> renderTargets2;
+	glGenTextures(1, &imageTexture);
+	renderTargets2.push_back(&imageTexture);
+	glGenTextures(1, &normalTexture);
+	renderTargets2.push_back(&normalTexture);
+	glGenTextures(1, &depthTexture);
+	renderTargets2.push_back(&depthTexture);
+	//intermediateFBO = prepareFBO(renderTargets2, false, false);
+	configureFBO(&intermediateFBO, &renderTargets2, false, false);
 
 
 	// shader configuration
@@ -246,9 +262,9 @@ int main(int argc, char** argv)
 	freiChenShader.setInt("textureNormal", 1);
 	freiChenShader.setInt("textureDepth", 2);*/
 	sobelShader.use();
-	sobelShader.setInt("textureImage", 0);
-	sobelShader.setInt("textureNormal", 1);
-	sobelShader.setInt("textureDepth", 2);
+	sobelShader.setInt("imageTexture", 0);
+	sobelShader.setInt("normalTexture", 1);
+	sobelShader.setInt("depthTexture", 2);
 
 
 
@@ -303,16 +319,22 @@ int main(int argc, char** argv)
 			break;
 
 		case 2: // Gooch shader
+			// enable draw buffers for intermediateFBO
+			// this is really important for the blit operation to copy into ALL color buffers
+			glBindFramebuffer(GL_FRAMEBUFFER, intermediateFBO);
+			glDrawBuffers(3, GBuffers);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 			glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 				glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-			
-				// enable 3 render targets for drawing and clear buffers
-				glDrawBuffers(3, GBuffers);
-				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-				//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				// before rendering the first pass, clear the normals' render target to a vector facing away from the camera
+				// Before rendering the first pass
+				// clear the image's render target to white
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+				glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				// clear the normals' render target to a vector facing away from the camera
 				glDrawBuffer(GL_COLOR_ATTACHMENT1);
 				glm::vec3 clearVec(0.0f, 0.0f, -1.0f);
 				// from normalized vector to rgb color; from [-1,1] to [0,1]
@@ -320,10 +342,16 @@ int main(int argc, char** argv)
 				glClearColor(clearVec.x, clearVec.y, clearVec.z, 0.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 
-				// now enable all render targets again for drawing
-				glDrawBuffers(3, GBuffers);
+				// clear the depth's render target to black
+				glDrawBuffer(GL_COLOR_ATTACHMENT2);
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT);
 
-				// First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to a other render targets
+				// now enable all render targets for drawing
+				glDrawBuffers(3, GBuffers);
+				glClear(GL_DEPTH_BUFFER_BIT);
+
+				// First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to the other render targets
 				goochShader.use();
 				// set uniforms
 				goochShader.setMat4("model", modelMatrix);
@@ -340,6 +368,12 @@ int main(int argc, char** argv)
 				// render model
 				modelToRender->Draw(goochShader);
 
+				// now blit multisampled buffer(s) to normal colorbuffer of intermediateFBO
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO);
+				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				
+
 			// Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
 			// bind back to default framebuffer and draw a quad plane with the attached framebuffer color textures
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -351,14 +385,13 @@ int main(int argc, char** argv)
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 				sobelShader.use();
-				//sobelShader.use();
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, textureImage);
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, textureNormal);
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, textureDepth);
 				glBindVertexArray(quadVAO);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, imageTexture);
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, normalTexture);
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, depthTexture);
 			
 				// set uniforms
 				//freiChenShader.setFloat("edgeThreshold", 0.03f);
@@ -407,16 +440,16 @@ int main(int argc, char** argv)
 		// render the light source
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		const float radius = 4.0f;
-		/*if (!paused)
+		/*const float radius = 4.0f;
+		if (!paused)
 		{
 			lightPos.x = sin(currentFrame / 1.5f) * radius;
 			lightPos.z = cos(currentFrame / 1.5f) * radius;
 		}*/
-		glm::mat4 modelMatrixLight = glm::mat4(1.0f);
-		modelMatrixLight = glm::translate(modelMatrixLight, lightPos);
-		modelMatrixLight = glm::scale(modelMatrixLight, glm::vec3(0.2f)); // a smaller cube
-		lightSourceShader.setMat4("model", modelMatrixLight);
+		modelMatrix = glm::mat4(1.0f);
+		modelMatrix = glm::translate(modelMatrix, lightPos);
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // a smaller cube
+		lightSourceShader.setMat4("model", modelMatrix);
 		glBindVertexArray(lightSourceVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -426,7 +459,7 @@ int main(int argc, char** argv)
 	}
 
 	// deallocate all resources
-	glDeleteTextures(3, renderTargets);
+	//glDeleteTextures(3, renderTargets);
 	glDeleteVertexArrays(1, &lightSourceVAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &uboMatrices);
@@ -540,46 +573,71 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 // Source: https://www.lighthouse3d.com/tutorials/opengl_framebuffer_objects/
 // ----------------------------------------------------------------------
-GLuint prepareFBO(int w, int h, int colorCount, GLuint* renderTargets) {
-	GLuint FBO;
-	glGenFramebuffers(1, &FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+void configureFBO(GLuint* FBO, vector<GLuint*>* renderTargets, bool multiSample, bool depthOrStencil) {
+	//GLuint FBO;
+	glGenFramebuffers(1, FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
 
 	// get default textures
 	int width, height, nrChannels;
 	unsigned char* whiteTexture = stbi_load("Textures/white.png", &width, &height, &nrChannels, 0);
 	unsigned char* blackTexture = stbi_load("Textures/black.png", &width, &height, &nrChannels, 0);
 
-	// generate 2 texture buffers
-	for (int i = 0; i < colorCount; i++)
+	// generate texture buffers
+	for (int i = 0; i < (*renderTargets).size(); i++)
 	{
-		//unsigned int tex;
-		//glGenTextures(1, &rbs[i]);
-		glBindTexture(GL_TEXTURE_2D, renderTargets[i]);
-		//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderTargets[i]);
+		if (multiSample)
+		{
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *(*renderTargets)[i]);
 
-		//if (i == 0) // if image texture
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, whiteTexture);
-		//else
-		//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, blackTexture);
+			//if (i == 0) // if image texture
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, numSamples, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+			//else
+			//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, blackTexture);
+
+			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, *(*renderTargets)[i], 0);
+
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+		}
+		else
+		{
+			glBindTexture(GL_TEXTURE_2D, *(*renderTargets)[i]);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, whiteTexture);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, *(*renderTargets)[i], 0);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, renderTargets[i], 0);
 	}
 
-	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-	GLuint rbo;
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	if (depthOrStencil)
+	{
+		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+		GLuint rbo;
+		glGenRenderbuffers(1, &rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 
+		// use a single renderbuffer object for both a depth AND stencil buffer
+		if (multiSample)
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, numSamples, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		else
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	}
+	
 	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return FBO;
+	//return FBO;
 }
