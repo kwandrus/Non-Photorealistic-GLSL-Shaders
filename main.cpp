@@ -37,7 +37,8 @@ int vectorIndex = 0;
 Model* modelToRender;
 
 // camera
-Camera camera(glm::vec3(0.0f, 1.5f, 10.0f));
+// Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
+Camera camera(0.0f, 5.0f, 10.0f, 0.0f, 1.0f, 0.0f, -90.0f, -20.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -332,6 +333,7 @@ int main(int argc, char** argv)
 				// clear the image's render target to white
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
 				glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+				//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 
 				// clear the normals' render target to a vector facing away from the camera
@@ -371,6 +373,16 @@ int main(int argc, char** argv)
 				// now blit multisampled buffer(s) to normal colorbuffer of intermediateFBO
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO);
+
+				// must copy each color attachment one at a time
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glReadBuffer(GL_COLOR_ATTACHMENT1);
+				glDrawBuffer(GL_COLOR_ATTACHMENT1);
+				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glReadBuffer(GL_COLOR_ATTACHMENT2);
+				glDrawBuffer(GL_COLOR_ATTACHMENT2);
 				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				
 
@@ -402,6 +414,8 @@ int main(int argc, char** argv)
 				sobelShader.setFloat("_OutlineNormalMultiplier", 1.0f);
 				sobelShader.setFloat("_OutlineNormalBias", 10.0f);
 				sobelShader.setVec4("_OutlineColor", 0.0f, 0.0f, 0.0f, 1.0f);
+				sobelShader.setFloat("depthThreshold", 0.075f);
+				sobelShader.setFloat("normalThreshold", 0.075f);
 
 				// finally render quad
 				glBindVertexArray(quadVAO);

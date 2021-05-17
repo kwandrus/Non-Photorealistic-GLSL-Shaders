@@ -40,6 +40,6 @@ void main()
 	vec3 specular = specularStrength * spec * lightColor;
 
 	FragColor = vec4(finalCool + finalWarm + specular, 1.0);
-	normalOut = vec4(Normal, 0.0);
-	depthOut = vec4(FragPos.z, 0.0, 0.0, 0.0);
+	normalOut = vec4(Normal, 1.0);
+	depthOut = vec4(FragPos.z, FragPos.z, FragPos.z, 1.0);
 }
