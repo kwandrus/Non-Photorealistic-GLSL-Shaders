@@ -3,7 +3,7 @@
 An OpenGL program that showcases non-photorealistic rendering techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
 and pencil hatching.
 
-## Controls
+## Keyboard and Mouse Input Controls
 
 Esc - End program.  
 W,A,S,D,Q,E - Forward, backward, left, right, up, down.  
@@ -20,7 +20,11 @@ Tab - Change model.
 
 ### Toon Shading
 
-![Image alt text](./Results/ToonShading.png)
+![Utah Teapot with Toon Shading](./Results/ToonShading.PNG)
+
+### Gooch Shading
+
+![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)
 
 ## OpenGL, Graphics, and Math Topics Used
 
