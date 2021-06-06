@@ -8,7 +8,17 @@ https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf
 https://rendermeapangolin.wordpress.com/2015/05/07/gooch-shading/
 
 Sobel Filter and Edge Detection
-https://gamedev.stackexchange.com/questions/68401/how-can-i-draw-outlines-around-3d-models
-https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
-https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
-https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge-detection-filter
+https://www.cs.mcgill.ca/~cs767/papers/saito90.pdf
+http://www-evasion.inrialpes.fr/people/Philippe.Decaudin/Publis/RR-2919-en.pdf
+	
+	Supplementary Edge Detection Resources:
+	https://gamedev.stackexchange.com/questions/68401/how-can-i-draw-outlines-around-3d-models
+	https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
+	https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
+	https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge-detection-filter
+
+
+
+Shortcomings
+
+Lapped textures

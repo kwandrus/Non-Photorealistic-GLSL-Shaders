@@ -94,5 +94,8 @@
     <None Include="Shaders\SobelOutline.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\Hatching.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -167,6 +167,7 @@
     <ClInclude Include="light.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Hatching.frag" />
     <None Include="Shaders\SobelOutline.frag" />
     <None Include="Shaders\DisplayNormals.frag" />
     <None Include="Shaders\DisplayNormals.geom" />
