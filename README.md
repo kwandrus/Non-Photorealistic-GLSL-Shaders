@@ -26,6 +26,10 @@ Tab - Change model.
 
 ![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)
 
+## Pencil Hatching
+
+In Progress
+
 ## OpenGL, Graphics, and Math Topics Used
 
 GLFW, Vertex Array Objects, Vertex Buffer Objects, Uniform Buffer Objects, Framebuffer Objects, Creating Textures and Sampling in Shaders, Shader Compilation,
