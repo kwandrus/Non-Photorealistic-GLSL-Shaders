@@ -326,9 +326,9 @@ int main(int argc, char** argv)
 		// world transformation
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f));
-		if (!paused)
+		/*if (!paused)
 			rotationTime = (float)glfwGetTime();
-		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));*/
 		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
 		
@@ -510,12 +510,12 @@ int main(int argc, char** argv)
 		// render the light source
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		/*const float radius = 4.0f;
+		const float radius = 4.0f;
 		if (!paused)
 		{
 			lightPos.x = sin(currentFrame / 1.5f) * radius;
 			lightPos.z = cos(currentFrame / 1.5f) * radius;
-		}*/
+		}
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, lightPos);
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // a smaller cube
@@ -603,12 +603,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		activeShaderID = 4;
 		texturesToggle = true;
 	}
-	if (key == GLFW_KEY_5 && action == GLFW_PRESS) // toggle textures
-		texturesToggle = !texturesToggle;
+	//if (key == GLFW_KEY_5 && action == GLFW_PRESS) // toggle textures
+	//	texturesToggle = !texturesToggle;
 	if (key == GLFW_KEY_6 && action == GLFW_PRESS) // toggle normals displayed
 		displayNormals = !displayNormals;
 
-	if (key == GLFW_KEY_0 && action == GLFW_PRESS)
+	if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
 	{
 		vectorIndex++;
 

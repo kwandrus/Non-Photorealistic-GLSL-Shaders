@@ -26,25 +26,25 @@ void main()
 	float diff = max(dot(norm, lightDir), 0.0);
 	//diff = diff * 3(0.2326, 0.7152, 0.0722));
 
-	// 6 texture lookups NOT great for performance -> change to Texture Array?
-	float hatch0 = texelFetch( hatching0, ivec2(gl_FragCoord), 0 ).r;
+	// 6 texture lookups NOT ideal for performance -> change to Texture Array?
+	/*float hatch0 = texelFetch( hatching0, ivec2(gl_FragCoord), 0 ).r;
 	float hatch1 = texelFetch( hatching1, ivec2(gl_FragCoord), 0 ).r;
 	float hatch2 = texelFetch( hatching2, ivec2(gl_FragCoord), 0 ).r;
 	float hatch3 = texelFetch( hatching3, ivec2(gl_FragCoord), 0 ).r;
 	float hatch4 = texelFetch( hatching4, ivec2(gl_FragCoord), 0 ).r;
-	float hatch5 = texelFetch( hatching5, ivec2(gl_FragCoord), 0 ).r;
+	float hatch5 = texelFetch( hatching5, ivec2(gl_FragCoord), 0 ).r;*/
 
-	/*float hatch0 = texture(hatching0, TexCoords).r;
+	float hatch0 = texture(hatching0, TexCoords).r;
 	float hatch1 = texture(hatching1, TexCoords).r;
 	float hatch2 = texture(hatching2, TexCoords).r;
 	float hatch3 = texture(hatching3, TexCoords).r;
 	float hatch4 = texture(hatching4, TexCoords).r;
-	float hatch5 = texture(hatching5, TexCoords).r;*/
+	float hatch5 = texture(hatching5, TexCoords).r;
 
 	// weight math arithmetic from http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html
-	//float lightIntensity = dot(vec3(diff, diff, diff), vec3(0.2326, 0.7152, 0.0722)) * 6;
-	//vec3 lightIntensity3 = vec3(lightIntensity, lightIntensity, lightIntensity);
-	vec3 lightIntensity3 = vec3(diff, diff, diff) * 6;
+	float lightIntensity = dot(vec3(diff, diff, diff), vec3(0.2326, 0.7152, 0.0722)) * 6;
+	vec3 lightIntensity3 = vec3(lightIntensity, lightIntensity, lightIntensity);
+	//vec3 lightIntensity3 = vec3(diff, diff, diff) * 6;
 	vec3 weights0 = clamp(lightIntensity3 - vec3(0, 1, 2), 0.0, 1.0);
 	vec3 weights1 = clamp(lightIntensity3 - vec3(3, 4, 5), 0.0, 1.0);
 
