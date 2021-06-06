@@ -14,7 +14,7 @@ uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform int colorSteps = 3;
 uniform bool texturesToggle;
-// uniform vec3 objectColor;
+uniform vec3 objectColor;
 
 void main()
 {
@@ -29,7 +29,7 @@ void main()
 	float diff = dot(norm, lightDir);
 	float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
 
-	vec3 toonColor = diffToon * lightColor;
+	vec3 toonColor = diffToon * lightColor * objectColor;
 
 	// specular
 	float specularStrength = 0.5;

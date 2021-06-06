@@ -344,6 +344,7 @@ int main(int argc, char** argv)
 			toonShader.setVec3("lightPos", lightPos);
 			toonShader.setVec3("viewPos", camera.Position);
 			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+			toonShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
 			toonShader.setBool("texturesToggle", texturesToggle);
 			// render model
 			modelToRender->Draw(toonShader);
