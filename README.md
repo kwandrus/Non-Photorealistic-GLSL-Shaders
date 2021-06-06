@@ -18,12 +18,18 @@ Tab - Change model.
 
 ## Results
 
+### Toon Shading
+
+![Image alt text](./Results/ToonShading.png)
 
 ## OpenGL, Graphics, and Math Topics Used
 
 GLFW, Vertex Array Objects, Vertex Buffer Objects, Uniform Buffer Objects, Framebuffer Objects, Creating Textures and Sampling in Shaders, Shader Compilation,
 Anti-Aliasing, Mipmaps, Multi-Pass Rendering, Transformations and Coordinate Systems, Sobel Filter (for generating contour and silhouette outlines), Phong Lighting,
 
+## Shortcomings
+
+Lapped textures
 
 ## References
 
