@@ -26,6 +26,10 @@ Tab - Change model.
 
 ![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)
 
+## Pencil Hatching
+
+In Progress
+
 ## OpenGL, Graphics, and Math Topics Used
 
 GLFW, Vertex Array Objects, Vertex Buffer Objects, Uniform Buffer Objects, Framebuffer Objects, Creating Textures and Sampling in Shaders, Shader Compilation,
@@ -37,10 +41,14 @@ Lapped textures
 
 ## References
 
-### For GLFW and glad, Window Setup, and Overall OpenGL Reference:
+### For GLFW and glad, Window Setup, and Overall OpenGL Reference
 https://learnopengl.com/
 
-### Gooch Shading:
+### NPR Resources
+Non-Photorealistic Rendering by Bruce & Amy Gooch (book, 2001)  
+Non-Photorealistic Computer Graphics by Thomas Strothotte & Stefan Schlechtweg (book, 2002)
+
+### Gooch Shading
 https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf  
 https://rendermeapangolin.wordpress.com/2015/05/07/gooch-shading/  
 
@@ -48,7 +56,7 @@ https://rendermeapangolin.wordpress.com/2015/05/07/gooch-shading/
 https://www.cs.mcgill.ca/~cs767/papers/saito90.pdf  
 http://www-evasion.inrialpes.fr/people/Philippe.Decaudin/Publis/RR-2919-en.pdf  
 	
-#### Supplementary Edge Detection Resources:
+#### Supplementary Edge Detection Resources
 https://gamedev.stackexchange.com/questions/68401/how-can-i-draw-outlines-around-3d-models  
 https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/  
 https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/  
