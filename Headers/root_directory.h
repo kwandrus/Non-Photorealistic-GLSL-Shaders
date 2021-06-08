@@ -1,1 +1,1 @@
-const char* logl_root = "C:/Users/Kyle/Documents/Graphics/Shaders/OpenGL Shader";
+const char* logl_root = "C:/Users/Kyle/Documents/Graphics/Shaders/NonPhotorealisticShaders";
