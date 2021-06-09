@@ -64,4 +64,5 @@ https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge
   
 ### Pencil Hatching
 http://hhoppe.com/hatching.pdf  
-http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html
+http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html  
+https://sites.google.com/site/cs7490finalrealtimehatching/home
