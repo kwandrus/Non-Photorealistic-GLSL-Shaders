@@ -7,6 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Headers/render_text.h"
+
 #include <stdio.h>
 #include <iostream>
 #include <vector>
@@ -36,6 +38,7 @@ bool texturesToggle = true;
 std::vector<Model*> modelsList;
 int vectorIndex = 0;
 Model* modelToRender;
+std::map<GLchar, Character> Characters;
 
 // camera
 // Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
@@ -104,6 +107,8 @@ int main(int argc, char** argv)
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 	/// build and compile our shader program
@@ -116,6 +121,7 @@ int main(int argc, char** argv)
 	Shader sobelShader("Shaders/RenderQuad.vert", "Shaders/SobelOutline.frag");
 	Shader normalShader("Shaders/DisplayNormals.vert", "Shaders/DisplayNormals.frag", "Shaders/DisplayNormals.geom");
 	Shader hatchingShader("Shaders/default.vert", "Shaders/Hatching.frag");
+	Shader renderTextShader("Shaders/RenderText.vert", "Shaders/RenderText.frag");
 	
 	// load models
 	// -----------
@@ -183,12 +189,12 @@ int main(int argc, char** argv)
 
 	// configure light source cube VAO and VBO
 	// ---------------------------------
-	GLuint VBO, lightSourceVAO;
+	GLuint lightSourceVBO, lightSourceVAO;
 	glGenVertexArrays(1, &lightSourceVAO);
-	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &lightSourceVBO);
 	glBindVertexArray(lightSourceVAO);
 	// load data into vertex buffer
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, lightSourceVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lightSourceVertices), lightSourceVertices, GL_STATIC_DRAW);
 	// set the vertex attribute pointers
 	glEnableVertexAttribArray(0);
@@ -227,12 +233,6 @@ int main(int argc, char** argv)
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	// define the range of the buffer that links to a uniform binding point
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
-
-	// store the projection matrix (we only have to do this once)
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 
 	// configure frame buffer objects
@@ -275,6 +275,7 @@ int main(int argc, char** argv)
 
 
 	// assign render targets for goochFBO and intermediateFBO
+	// -----------------------------------
 	GLuint GBuffers[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 	glBindFramebuffer(GL_FRAMEBUFFER, goochFBO);
 	glDrawBuffers(3, GBuffers);
@@ -282,6 +283,29 @@ int main(int argc, char** argv)
 	glBindFramebuffer(GL_FRAMEBUFFER, intermediateFBO);
 	glDrawBuffers(3, GBuffers);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// set up FreeType
+	// -----------------------------------
+	int returnVal = SetUpFreeType(&Characters);
+	if (returnVal != 0)
+	{
+		return returnVal;
+	}
+	// configure VAO/VBO for texture quads
+	GLuint textVAO, textVBO;
+	glGenVertexArrays(1, &textVAO);
+	glGenBuffers(1, &textVBO);
+	glBindVertexArray(textVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
+
 
 	// shader configuration
 	// ---------------------------------
@@ -299,8 +323,11 @@ int main(int argc, char** argv)
 	hatchingShader.setInt("hatching5", 5);
 
 
+	float fpsTimer = glfwGetTime();
+	int numFrames = 0, numFramesToDisplay = 0;
 
 	// render loop
+	// -----------------------------------
 	while (!glfwWindowShouldClose(window))
 	{
 		// per-frame time logic
@@ -318,12 +345,14 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// set the view matrix in the uniform block - we only have to do this once per loop iteration.
+		// -----------------------------------
 		glm::mat4 view = camera.GetViewMatrix();
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		// world transformation
+		// -----------------------------------
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f));
 		/*if (!paused)
@@ -331,9 +360,15 @@ int main(int argc, char** argv)
 		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));*/
 		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
-		
+		// store the projection matrix
+		// -----------------------------------
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		// activate shader before setting uniforms
+		// -----------------------------------
 		switch (activeShaderID)
 		{
 		case 1: // toon shader
@@ -497,6 +532,7 @@ int main(int argc, char** argv)
 			modelToRender->Draw(phongShader);
 		}
 
+
 		if (displayNormals)
 		{
 			// draw model with normal visualizing geometry shader
@@ -509,6 +545,7 @@ int main(int argc, char** argv)
 		}
 
 		// render the light source
+		// -----------------------------------
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
 		const float radius = 4.0f;
@@ -524,6 +561,21 @@ int main(int argc, char** argv)
 		glBindVertexArray(lightSourceVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+		// render the FPS
+		// -----------------------------------
+		renderTextShader.use();
+		renderTextShader.setMat4("projection", textProjection);
+		numFrames++;
+		if (currentFrame - fpsTimer >= 1.0f)
+		{
+			numFramesToDisplay = numFrames;
+			numFrames = 0;
+			fpsTimer += 1.0f;
+		}
+		// print FPS on screen
+		std::string fpsText = std::string("FPS: ") + std::to_string(numFramesToDisplay);
+		RenderText(renderTextShader, fpsText.c_str(), Characters, textVAO, textVBO, 25.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.0f, 0.0f));
+
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwPollEvents();
 		glfwSwapBuffers(window);
@@ -532,10 +584,17 @@ int main(int argc, char** argv)
 	// deallocate all resources
 	//glDeleteTextures(3, renderTargets);
 	glDeleteVertexArrays(1, &lightSourceVAO);
-	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &quadVAO);
+	glDeleteVertexArrays(1, &textVAO);
+
+	glDeleteBuffers(1, &lightSourceVBO);
+	glDeleteBuffers(1, &quadVBO);
+	glDeleteBuffers(1, &textVBO);
 	glDeleteBuffers(1, &uboMatrices);
+
 	glDeleteFramebuffers(1, &goochFBO);
 	glDeleteFramebuffers(1, &intermediateFBO);
+	glDeleteFramebuffers(1, &hatchingFBO);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	glfwTerminate();
@@ -644,10 +703,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	//std::cout << "we got here" << std::endl;
 	camera.ProcessMouseScroll(yoffset);
 }
 
-// Source: https://www.lighthouse3d.com/tutorials/opengl_framebuffer_objects/
+// Source, but heavily modified: https://www.lighthouse3d.com/tutorials/opengl_framebuffer_objects/
 // ----------------------------------------------------------------------
 void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil) {
 	//GLuint FBO;

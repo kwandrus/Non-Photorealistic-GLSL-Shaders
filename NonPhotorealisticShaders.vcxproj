@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mtd.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,7 +149,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mtd.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -160,15 +160,18 @@
   <ItemGroup>
     <ClInclude Include="Headers\camera.h" />
     <ClInclude Include="Headers\filesystem.h" />
+    <ClInclude Include="Headers\light.h" />
     <ClInclude Include="Headers\mesh.h" />
     <ClInclude Include="Headers\model.h" />
+    <ClInclude Include="Headers\render_text.h" />
     <ClInclude Include="Headers\root_directory.h" />
     <ClInclude Include="Headers\shader.h" />
     <ClInclude Include="Headers\stb_image.h" />
-    <ClInclude Include="light.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Hatching.frag" />
+    <None Include="Shaders\RenderText.frag" />
+    <None Include="Shaders\RenderText.vert" />
     <None Include="Shaders\SobelOutline.frag" />
     <None Include="Shaders\DisplayNormals.frag" />
     <None Include="Shaders\DisplayNormals.geom" />

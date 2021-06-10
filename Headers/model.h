@@ -1,3 +1,5 @@
+// Source: https://github.com/JoeyDeVries/LearnOpenGL/tree/master/includes/learnopengl
+
 #ifndef MODEL_H
 #define MODEL_H
 

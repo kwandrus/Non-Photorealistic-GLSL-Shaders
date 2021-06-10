@@ -47,7 +47,10 @@
     <ClInclude Include="Headers\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="light.h">
+    <ClInclude Include="Headers\light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\render_text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -95,6 +98,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\Hatching.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\RenderText.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\RenderText.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

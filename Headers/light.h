@@ -1,3 +1,5 @@
+// Source: https://github.com/JoeyDeVries/LearnOpenGL/tree/master/includes/learnopengl
+
 #ifndef LIGHT_H
 #define LIGHT_H
 

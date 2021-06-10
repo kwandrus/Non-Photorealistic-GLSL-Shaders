@@ -1,3 +1,5 @@
+// Source: https://github.com/JoeyDeVries/LearnOpenGL/tree/master/includes/learnopengl
+
 #ifndef CAMERA_H
 #define CAMERA_H
 
@@ -6,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
+#include <iostream>
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement {
@@ -112,6 +115,7 @@ public:
     void ProcessMouseScroll(float yoffset)
     {
         Zoom -= (float)yoffset;
+        std::cout << "Zoom is " << Zoom << std::endl;
         if (Zoom < 1.0f)
             Zoom = 1.0f;
         if (Zoom > 45.0f)
