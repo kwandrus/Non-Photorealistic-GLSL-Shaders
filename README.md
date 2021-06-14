@@ -3,41 +3,49 @@
 An OpenGL program that showcases non-photorealistic rendering techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
 and pencil hatching.
 
-## Keyboard and Mouse Input Controls
+## Input Controls
 
-Esc - End program.  
-W,A,S,D,Q,E - Forward, backward, left, right, up, down.  
-Tab - Change model.
+### Mouse
+Move the mouse to change the camera view direction.  
+Use the scroll wheel to zoom in and out.  
 
-### Effects
+### Keyboard
 
-1 - Toon Shading.  
-2 - Gooch Shading.  
-3 - Pencil Hatching.  
-4 - Phong shading. (Not 'non-photorealistic,' but included for default purposes)  
+<kbd>Esc</kbd> - End program.  
+<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move the camera forward, backward, left, right.  
+<kbd>Q</kbd><kbd>E</kbd> - Move the camera up and down.  
+<kbd>R</kbd> - Reset the camera to its original position.  
+<kbd>←</kbd><kbd>→</kbd> - Rotate the light around the model.  
+  
+<kbd>1</kbd> - Toon Shading.  
+<kbd>2</kbd> - Gooch Shading.  
+<kbd>3</kbd> - Pencil Hatching.  
+<kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
+<kbd>N</kbd> - Display the normal vectors on the model. Toggle for on/off. Doesn't work with Gooch Shading.  
 
-## Results
+## Implementation
+
+### Libraries
+
+- [GLFW](https://www.glfw.org/) is used to create the windowing system and to receive inputs.  
+- [GLAD](https://glad.dav1d.de/) is used to load pointers to OpenGL functions.  
+- [GLM](https://glm.g-truc.net/0.9.9/index.html) is used to perform 3D math.  
+- [Assimp](http://www.assimp.org/) is used to load 3D models.  
+- [stb_image](https://github.com/nothings/stb) is used to load textures.  
+- [FreeType](https://www.freetype.org/) is used to display text on the screen.  
 
 ### Toon Shading
 
-![Utah Teapot with Toon Shading](./Results/ToonShading.PNG)
+![Utah Teapot with Toon Shading](./Results/ToonShading.PNG)  
 
 ### Gooch Shading
 
-![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)
+![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)  
+sobel filter applied to normal and depth images of the scene to detect silhouette and contour lines, artifacts, multi-pass rendering
 
-## Pencil Hatching
+### Pencil Hatching
 
-In Progress
-
-## OpenGL, Graphics, and Math Topics Used
-
-GLFW, Vertex Array Objects, Vertex Buffer Objects, Uniform Buffer Objects, Framebuffer Objects, Creating Textures and Sampling in Shaders, Shader Compilation,
-Anti-Aliasing, Mipmaps, Multi-Pass Rendering, Transformations and Coordinate Systems, Sobel Filter (for generating contour and silhouette outlines), Phong Lighting,
-
-## Shortcomings
-
-Lapped textures
+calculated light intensity using Phong lighting model, tonal art map consisted of 6 mipmapped texture images, blended between the 2 textures nearest to the intensity. One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model largely seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
 
 ## References
 
