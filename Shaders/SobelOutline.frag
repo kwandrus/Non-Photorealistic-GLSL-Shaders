@@ -9,11 +9,11 @@ uniform sampler2D imageTexture;
 uniform sampler2D normalTexture;
 uniform sampler2D depthTexture;
 
-uniform float _OutlineThickness;
-uniform float _OutlineDepthMultiplier;
-uniform float _OutlineDepthBias;
-uniform float _OutlineNormalMultiplier;
-uniform float _OutlineNormalBias;
+//uniform float _OutlineThickness;
+//uniform float _OutlineDepthMultiplier;
+//uniform float _OutlineDepthBias;
+//uniform float _OutlineNormalMultiplier;
+//uniform float _OutlineNormalBias;
 uniform float depthThreshold;
 uniform float normalThreshold;
 
@@ -137,6 +137,7 @@ void main(void)
 	//float sobelDepth = 0;
 	
 	float sobelOutline = clamp(max(sobelDepth, sobelNormal), 0.0, 1.0);
+	//float sobelOutline = clamp(sobelNormal, 0.0, 1.0);
 	vec3 outlineColor = mix(sceneColor, _OutlineColor.rgb, _OutlineColor.a);
     vec3 color = mix(sceneColor, outlineColor, sobelOutline);
 

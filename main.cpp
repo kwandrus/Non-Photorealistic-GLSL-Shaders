@@ -10,7 +10,7 @@
 #include "Headers/render_text.h"
 
 #include <stdio.h>
-#include <iostream>
+#include <iostream>23
 #include <vector>
 #include <string>
 
@@ -51,12 +51,15 @@ bool firstMouse = true;
 float currentFrame = 0.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-bool paused = false;
+bool paused = true;
 float pausedFrame = 0.0f;
 float rotationTime = 0.0f;
 
 // lighting
 glm::vec3 lightPos(3.0f, 4.0f, 2.0f);
+float lightVelocity = 2.0f;
+float lightRadius = 4.0f;
+float directionFlip = 1.0f;
 
 
 int main(int argc, char** argv)
@@ -126,7 +129,7 @@ int main(int argc, char** argv)
 	// load models
 	// -----------
 	//Model ourModel(FileSystem::getPath("Models/nanosuit/nanosuit.obj"));
-	Model teapotModel(FileSystem::getPath("Models/teapot.obj"));
+	Model teapotModel(FileSystem::getPath("Models/teapot3.obj"));
 	Model backpackModel(FileSystem::getPath("Models/Backpack/backpack.obj"));
 	Model bunnyModel(FileSystem::getPath("Models/StanfordBunny.obj"));
 	//Model ourModel(FileSystem::getPath("Models/Ravenors-Reading Corner/Ravenors-Reading Corner.obj"));
@@ -352,9 +355,13 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		// world transformation
+		// scale then rotation then translation -> T * R * S
 		// -----------------------------------
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f));
+		//modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
+		
 		/*if (!paused)
 			rotationTime = (float)glfwGetTime();
 		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));*/
@@ -473,14 +480,14 @@ int main(int argc, char** argv)
 				// set uniforms
 				//freiChenShader.setFloat("edgeThreshold", 0.03f);
 				//sobelShader.setFloat("edgeThreshold", 0.03f);
-				sobelShader.setFloat("_OutlineThickness", 1.0f);
+				/*sobelShader.setFloat("_OutlineThickness", 1.0f);
 				sobelShader.setFloat("_OutlineDepthMultiplier", 1.0f);
 				sobelShader.setFloat("_OutlineDepthBias", 1.0f);
 				sobelShader.setFloat("_OutlineNormalMultiplier", 1.0f);
-				sobelShader.setFloat("_OutlineNormalBias", 10.0f);
+				sobelShader.setFloat("_OutlineNormalBias", 10.0f);*/
 				sobelShader.setVec4("_OutlineColor", 0.0f, 0.0f, 0.0f, 1.0f);
-				sobelShader.setFloat("depthThreshold", 0.075f);
-				sobelShader.setFloat("normalThreshold", 0.075f);
+				sobelShader.setFloat("depthThreshold", 0.04f);
+				sobelShader.setFloat("normalThreshold", 0.085f);
 
 				// finally render quad
 				glBindVertexArray(quadVAO);
@@ -548,11 +555,11 @@ int main(int argc, char** argv)
 		// -----------------------------------
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		const float radius = 4.0f;
 		if (!paused)
 		{
-			lightPos.x = sin(currentFrame / 1.5f) * radius;
-			lightPos.z = cos(currentFrame / 1.5f) * radius;
+			pausedFrame = pausedFrame + deltaTime * directionFlip;
+			lightPos.x = sin(pausedFrame / lightVelocity) * lightRadius;
+			lightPos.z = cos(pausedFrame / lightVelocity) * lightRadius;
 		}
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, lightPos);
@@ -622,6 +629,8 @@ void processMovement(GLFWwindow* window)
 		camera.ProcessKeyboard(UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+		camera.RestoreCamera();
 }
 
 
@@ -631,7 +640,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+
+	// light movement
+	/*if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 		if (paused == false)
 		{
@@ -643,8 +654,23 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			paused = false;
 			glfwSetTime(pausedFrame);
 		}
+	}*/
+	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) // rotate light counter-clockwise
+	{
+		paused = false;
+		directionFlip = 1.0f;
+	}
+	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) // rotate light clockwise
+	{
+		paused = false;
+		directionFlip = -1.0f;
+	}
+	if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_RELEASE)
+	{
+		paused = true;
 	}
 
+	// shaders
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS) // toon shading
 	{
 		activeShaderID = 1;
@@ -663,9 +689,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		activeShaderID = 4;
 		texturesToggle = true;
 	}
-	//if (key == GLFW_KEY_5 && action == GLFW_PRESS) // toggle textures
-	//	texturesToggle = !texturesToggle;
-	if (key == GLFW_KEY_6 && action == GLFW_PRESS) // toggle normals displayed
+	if (key == GLFW_KEY_N && action == GLFW_PRESS) // toggle normal vectors
 		displayNormals = !displayNormals;
 
 	if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
@@ -707,10 +731,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(yoffset);
 }
 
-// Source, but heavily modified: https://www.lighthouse3d.com/tutorials/opengl_framebuffer_objects/
+// Bind textures and buffers to frame buffer object
 // ----------------------------------------------------------------------
 void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil) {
-	//GLuint FBO;
+
 	glGenFramebuffers(1, FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
 

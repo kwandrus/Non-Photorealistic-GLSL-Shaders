@@ -38,6 +38,7 @@ public:
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    glm::mat3 OriginalInfo;
     // euler Angles
     float Yaw;
     float Pitch;
@@ -54,6 +55,9 @@ public:
         Yaw = yaw;
         Pitch = pitch;
         updateCameraVectors();
+
+        glm::vec3 temp = glm::vec3(Yaw, Pitch, 0.0f);
+        OriginalInfo = glm::mat3(Position, WorldUp, temp);
     }
     // constructor with scalar values
     Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
@@ -63,12 +67,25 @@ public:
         Yaw = yaw;
         Pitch = pitch;
         updateCameraVectors();
+
+        glm::vec3 temp = glm::vec3(Yaw, Pitch, 0.0f);
+        OriginalInfo = glm::mat3(Position, WorldUp, temp);
     }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
     {
         return glm::lookAt(Position, Position + Front, Up);
+    }
+
+    // restore original camera position and orientation
+    void RestoreCamera()
+    {
+        Position = OriginalInfo[0];
+        WorldUp = OriginalInfo[1];
+        Yaw = OriginalInfo[2][0];
+        Pitch = OriginalInfo[2][1];
+        updateCameraVectors();
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -115,7 +132,6 @@ public:
     void ProcessMouseScroll(float yoffset)
     {
         Zoom -= (float)yoffset;
-        std::cout << "Zoom is " << Zoom << std::endl;
         if (Zoom < 1.0f)
             Zoom = 1.0f;
         if (Zoom > 45.0f)
