@@ -79,7 +79,7 @@ public:
     }
 
     // restore original camera position and orientation
-    void RestoreCamera()
+    void ResetCamera()
     {
         Position = OriginalInfo[0];
         WorldUp = OriginalInfo[1];

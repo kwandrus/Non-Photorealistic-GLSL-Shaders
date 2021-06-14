@@ -52,13 +52,13 @@ float currentFrame = 0.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 bool paused = true;
-float pausedFrame = 0.0f;
 float rotationTime = 0.0f;
 
 // lighting
 glm::vec3 lightPos(3.0f, 4.0f, 2.0f);
-float lightVelocity = 2.0f;
-float lightRadius = 4.0f;
+float lightSourceFrame = 0.0f;
+float lightSourceVelocity = 2.0f;
+float lightPathRadius = 4.0f;
 float directionFlip = 1.0f;
 
 
@@ -344,7 +344,7 @@ int main(int argc, char** argv)
 
 		// render
 		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);	// Set background color to black and opaque
+		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);	// Set background color to black and opaque
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// set the view matrix in the uniform block - we only have to do this once per loop iteration.
@@ -362,9 +362,9 @@ int main(int argc, char** argv)
 		//modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
 		
-		/*if (!paused)
+		if (!paused)
 			rotationTime = (float)glfwGetTime();
-		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));*/
+		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
 		// store the projection matrix
@@ -488,6 +488,8 @@ int main(int argc, char** argv)
 				sobelShader.setVec4("_OutlineColor", 0.0f, 0.0f, 0.0f, 1.0f);
 				sobelShader.setFloat("depthThreshold", 0.04f);
 				sobelShader.setFloat("normalThreshold", 0.085f);
+				/*sobelShader.setFloat("depthThreshold", 0.075f);
+				sobelShader.setFloat("normalThreshold", 0.075f);*/
 
 				// finally render quad
 				glBindVertexArray(quadVAO);
@@ -555,12 +557,12 @@ int main(int argc, char** argv)
 		// -----------------------------------
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		if (!paused)
+		/*if (!paused)
 		{
-			pausedFrame = pausedFrame + deltaTime * directionFlip;
-			lightPos.x = sin(pausedFrame / lightVelocity) * lightRadius;
-			lightPos.z = cos(pausedFrame / lightVelocity) * lightRadius;
-		}
+			lightSourceFrame = lightSourceFrame + deltaTime * directionFlip;
+			lightPos.x = sin(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
+			lightPos.z = cos(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
+		}*/
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, lightPos);
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // a smaller cube
@@ -630,7 +632,7 @@ void processMovement(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-		camera.RestoreCamera();
+		camera.ResetCamera();
 }
 
 
@@ -642,19 +644,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 
 	// light movement
-	/*if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
-		if (paused == false)
-		{
-			paused = true;
-			pausedFrame = lastFrame;
-		}
-		else
-		{
-			paused = false;
-			glfwSetTime(pausedFrame);
-		}
-	}*/
+		paused = !paused;
+	}
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) // rotate light counter-clockwise
 	{
 		paused = false;
@@ -692,7 +685,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_N && action == GLFW_PRESS) // toggle normal vectors
 		displayNormals = !displayNormals;
 
-	if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	/*if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
 	{
 		vectorIndex++;
 
@@ -700,7 +693,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			vectorIndex = 0;
 
 		modelToRender = modelsList[vectorIndex];
-	}
+	}*/
 }
 
 // glfw: whenever the mouse moves, this callback is called
