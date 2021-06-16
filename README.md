@@ -42,9 +42,9 @@ Use the scroll wheel to zoom in and out.
 
 A simple toon fragment shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
 ```glsl
-float diff = dot(norm, lightDir);
-float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
-vec3 toonColor = diffToon * lightColor * objectColor;
+float diffuse = dot(normal, lightDir);
+float diffuseToon = max(ceil(diffuse * float(colorSteps)) / float(colorSteps), 0.0);
+vec3 toonColor = diffuseToon * lightColor * objectColor;
 ```
 
 ### Gooch Shading
