@@ -26,10 +26,10 @@ void main()
 	vec3 norm = normalize(Normal);
 	vec3 lightDir = normalize(lightPos - FragPos);
 	// if angle between norm and lightDir > 90 degrees, dot product is neg
-	float diff = dot(norm, lightDir);
-	float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
+	float diffuse = dot(norm, lightDir);
+	float diffuseToon = max(ceil(diffuse * float(colorSteps)) / float(colorSteps), 0.0);
 
-	vec3 toonColor = diffToon * lightColor * objectColor;
+	vec3 toonColor = diffuseToon * lightColor * objectColor;
 
 	// specular
 	float specularStrength = 0.5;
