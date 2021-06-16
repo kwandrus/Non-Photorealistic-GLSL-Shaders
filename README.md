@@ -1,6 +1,6 @@
 # Non-Photorealistic GLSL Shaders
 
-An OpenGL program that showcases non-photorealistic rendering techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
+An OpenGL program that showcases non-photorealistic rendering (NPR) techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
 and pencil hatching.
 
 ## Input Controls
@@ -15,13 +15,14 @@ Use the scroll wheel to zoom in and out.
 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move the camera forward, backward, left, right.  
 <kbd>Q</kbd><kbd>E</kbd> - Move the camera up and down.  
 <kbd>R</kbd> - Reset the camera to its original position.  
-<kbd>←</kbd><kbd>→</kbd> - Rotate the light around the model.  
+<kbd>Space</kbd> - Rotate the light around the model automatically. Toggle on/off.  
+<kbd>←</kbd><kbd>→</kbd> - Rotate the light around the model manually.  
   
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
 <kbd>3</kbd> - Pencil Hatching.  
 <kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
-<kbd>N</kbd> - Display the normal vectors on the model. Toggle for on/off. Doesn't work with Gooch Shading.  
+<kbd>N</kbd> - Display the normal vectors on the model. Toggle on/off. Doesn't work with Gooch Shading.  
 
 ## Implementation
 
@@ -35,17 +36,38 @@ Use the scroll wheel to zoom in and out.
 - [FreeType](https://www.freetype.org/) is used to display text on the screen.  
 
 ### Toon Shading
+<p align="center">
+  <img src="./Results/ToonShading.gif"/>
+</p>  
 
-![Utah Teapot with Toon Shading](./Results/ToonShading.PNG)  
+A simple toon fragment shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
+```glsl
+float diff = dot(norm, lightDir);
+float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
+vec3 toonColor = diffToon * lightColor * objectColor;
+```
 
 ### Gooch Shading
 
-![Utah Teapot with Gooch Shading](./Results/GoochShading.PNG)  
-sobel filter applied to normal and depth images of the scene to detect silhouette and contour lines, artifacts, multi-pass rendering
+<p align="center">
+  <img src="./Results/GoochShading.gif"/>
+</p>  
+
+[Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) (spearheaded by Amy and Bruce Gooch) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
+  
+I use 2 rendering passes in my implementation. The first pass computes the Gooch shading and stores the colored image, normal vectors, and fragment depths of the scene into 3 separate images. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. As you can see, artifacts are still present in the edge detection, so I still need to mess with the anti-aliasing and detection sensitivity values to achieve the desired smooth, crisp lines.  
+  
+Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of my Gooch shader that shows smoother transition from yellow to purple not affected by gif compression.  
 
 ### Pencil Hatching
 
-calculated light intensity using Phong lighting model, tonal art map consisted of 6 mipmapped texture images, blended between the 2 textures nearest to the intensity. One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model largely seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
+<p align="center">
+  <img src="./Results/PencilHatching.gif"/>
+</p>  
+
+Following [this real-time hatching paper,](http://hhoppe.com/hatching.pdf) I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
+  
+One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model, primarily seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
 
 ## References
 
