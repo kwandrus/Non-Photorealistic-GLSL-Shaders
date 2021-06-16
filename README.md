@@ -14,9 +14,9 @@ Use the scroll wheel to zoom in and out.
 <kbd>Esc</kbd> - End program.  
 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move the camera forward, backward, left, right.  
 <kbd>Q</kbd><kbd>E</kbd> - Move the camera up and down.  
-<kbd>R</kbd> - Reset the camera to its original position.  
-<kbd>Space</kbd> - Rotate the light around the model automatically. Toggle on/off.  
-<kbd>←</kbd><kbd>→</kbd> - Rotate the light around the model manually.  
+<kbd>R</kbd> - Reset the camera to its original zoom and position.  
+<kbd>Space</kbd> - Automatically rotate the light around the model. Toggle on/off. Gooch Shading: Automatically rotate the model around its Y-axis.  
+<kbd>←</kbd><kbd>→</kbd> - Manually rotate the light around the model either clockwise or counter-clockwise. Gooch Shading: Manually rotate the model around its Y-axis.  
   
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
@@ -50,19 +50,19 @@ vec3 toonColor = diffToon * lightColor * objectColor;
 ### Gooch Shading
 
 <p align="center">
-  <img src="./Results/GoochShading.gif"/>
+  <img src="./Results/GoochShadingFinal.gif"/>
 </p>  
 
-[Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) (spearheaded by Amy and Bruce Gooch) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
+[Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
   
-I use 2 rendering passes in my implementation. The first pass computes the Gooch shading and stores the colored image, normal vectors, and fragment depths of the scene into 3 separate images. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. As you can see, artifacts are still present in the edge detection, so I still need to mess with the anti-aliasing and detection sensitivity values to achieve the desired smooth, crisp lines.  
+I use 2 rendering passes in my implementation. The first pass computes the Gooch shading and stores the color, normal, and depth images of the scene into 3 separate buffers. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still clearly present in the edge detection though, but it seems to improve a bit the more you zoom in.  
   
-Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of my Gooch shader that shows smoother transition from yellow to purple not affected by gif compression.  
+Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
 ### Pencil Hatching
 
 <p align="center">
-  <img src="./Results/PencilHatching.gif"/>
+  <img src="./Results/PencilHatchingFinal.gif"/>
 </p>  
 
 Following [this real-time hatching paper,](http://hhoppe.com/hatching.pdf) I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
