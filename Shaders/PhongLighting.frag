@@ -6,14 +6,10 @@ in vec3 Normal;
 in vec3 FragPos;
 in vec2 TexCoords;
 
-// texture samplers
-uniform sampler2D texture_diffuse1;
-
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform float specularStrength;
-uniform bool texturesToggle;
 uniform vec3 objectColor;
 
 void main()
@@ -36,14 +32,6 @@ void main()
 	vec3 specular = specularStrength * spec * lightColor;
 
 	vec3 result = ambient + diffuse + specular;
-	// FragColor = vec4(result, 1.0) * texture(texture_diffuse1, TexCoords);
 
-	if (texturesToggle)
-	{
-		FragColor = vec4(result, 1.0) * texture(texture_diffuse1, TexCoords);
-	}
-	else
-	{
-		FragColor = vec4(result * objectColor, 1.0);
-	}
+	FragColor = vec4(result * objectColor, 1.0);
 }

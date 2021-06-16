@@ -20,16 +20,12 @@ uniform vec3 lightColor;
 
 void main()
 {
-	vec3 norm = normalize(Normal);
+	vec3 normal = normalize(Normal);
 	vec3 lightDir = normalize(lightPos - FragPos);
-	// if angle between norm and lightDir > 90 degrees, dot product is neg
-	float diff = max(dot(norm, lightDir), 0.0);
-	//diff = diff * 3(0.2326, 0.7152, 0.0722));
-
-	//ivec texSize = textureSize(hatching0)
+	// if angle between normal and lightDir > 90 degrees, dot product is neg
+	float diffuse = max(dot(normal, lightDir), 0.0);
 
 	ivec2 fragCoord = ivec2(gl_FragCoord.xy);
-
 	while(fragCoord.x >= 256)
 	{
 		fragCoord.x -= 256;
@@ -40,13 +36,6 @@ void main()
 	}
 
 	// 6 texture lookups NOT ideal for performance -> change to Texture Array?
-	/*float hatch0 = texelFetch( hatching0, ivec2(gl_FragCoord.xy), 0 ).r;
-	float hatch1 = texelFetch( hatching1, ivec2(gl_FragCoord.xy), 0 ).r;
-	float hatch2 = texelFetch( hatching2, ivec2(gl_FragCoord.xy), 0 ).r;
-	float hatch3 = texelFetch( hatching3, ivec2(gl_FragCoord.xy), 0 ).r;
-	float hatch4 = texelFetch( hatching4, ivec2(gl_FragCoord.xy), 0 ).r;
-	float hatch5 = texelFetch( hatching5, ivec2(gl_FragCoord.xy), 0 ).r;*/
-
 	float hatch0 = texelFetch( hatching0, fragCoord, 0 ).r;
 	float hatch1 = texelFetch( hatching1, fragCoord, 0 ).r;
 	float hatch2 = texelFetch( hatching2, fragCoord, 0 ).r;
@@ -54,17 +43,10 @@ void main()
 	float hatch4 = texelFetch( hatching4, fragCoord, 0 ).r;
 	float hatch5 = texelFetch( hatching5, fragCoord, 0 ).r;
 
-	/*float hatch0 = texture(hatching0, TexCoords, 3.0).r;
-	float hatch1 = texture(hatching1, TexCoords, 3.0).r;
-	float hatch2 = texture(hatching2, TexCoords, 3.0).r;
-	float hatch3 = texture(hatching3, TexCoords, 3.0).r;
-	float hatch4 = texture(hatching4, TexCoords, 3.0).r;
-	float hatch5 = texture(hatching5, TexCoords, 3.0).r;*/
 
 	// weight math arithmetic from http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html
-	float lightIntensity = dot(vec3(diff, diff, diff), vec3(0.2326, 0.7152, 0.0722)) * 6;
+	float lightIntensity = dot(vec3(diffuse, diffuse, diffuse), vec3(0.2326, 0.7152, 0.0722)) * 6;
 	vec3 lightIntensity3 = vec3(lightIntensity, lightIntensity, lightIntensity);
-	//vec3 lightIntensity3 = vec3(diff, diff, diff) * 6;
 	vec3 weights0 = clamp(lightIntensity3 - vec3(0, 1, 2), 0.0, 1.0);
 	vec3 weights1 = clamp(lightIntensity3 - vec3(3, 4, 5), 0.0, 1.0);
 

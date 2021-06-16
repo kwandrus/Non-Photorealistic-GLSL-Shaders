@@ -34,7 +34,6 @@ const unsigned int SCR_HEIGHT = 600;
 int numSamples = 4;
 int activeShaderID = 0; // default - phong shader
 bool displayNormals = false;
-//bool texturesToggle = true;
 std::vector<Model*> modelsList;
 int vectorIndex = 0;
 Model* modelToRender;
@@ -363,12 +362,10 @@ int main(int argc, char** argv)
 		// -----------------------------------
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f));
-		//modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
 		
 		if (!rotationPaused)
 			rotationTime = rotationTime + deltaTime * directionFlip;
-			//rotationTime = (float)glfwGetTime();
 
 		if (activeShaderID == 2)
 			modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -392,6 +389,7 @@ int main(int argc, char** argv)
 			rotationPaused = true;
 
 			toonShader.use();
+
 			// set uniforms
 			toonShader.setMat4("model", modelMatrix);
 			toonShader.setMat3("normalMatrix", normalMatrix);
@@ -399,7 +397,7 @@ int main(int argc, char** argv)
 			toonShader.setVec3("viewPos", camera.Position);
 			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			toonShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
-			//toonShader.setBool("texturesToggle", texturesToggle);
+
 			// render model
 			modelToRender->Draw(toonShader);
 			break;
@@ -416,7 +414,6 @@ int main(int argc, char** argv)
 				// clear the image's render target to white
 				glDrawBuffer(GBuffers[0]);
 				glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-				//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 
 				// clear the normals' render target to a vector facing away from the camera
@@ -439,6 +436,7 @@ int main(int argc, char** argv)
 
 				// First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to the other render targets
 				goochShader.use();
+
 				// set uniforms
 				goochShader.setMat4("model", modelMatrix);
 				goochShader.setMat3("normalMatrix", normalMatrix);
@@ -451,12 +449,14 @@ int main(int argc, char** argv)
 				goochShader.setFloat("specularStrength", 0.5f);
 				goochShader.setFloat("alpha", 0.25f);
 				goochShader.setFloat("beta", 0.5f);
+
 				// render model
 				modelToRender->Draw(goochShader);
 
 			// now blit multisampled buffer(s) to G intermediateFBO's G buffers
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, goochFBO);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO);
+
 				// must copy each color attachment one at a time
 				// blitting a multisampled source texture into a singlesampled destination takes care of MSAA resolve
 				// the resulting texture is anti-aliased
@@ -470,14 +470,12 @@ int main(int argc, char** argv)
 				glDrawBuffer(GBuffers[2]);
 				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				
-
 			// Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
 			// bind back to default framebuffer and draw a quad plane with the attached framebuffer color textures
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				//glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 				// clear all relevant buffers
 				// set background to white to be able to see rendered outline
-				//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 				glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -494,13 +492,6 @@ int main(int argc, char** argv)
 				glBindVertexArray(quadVAO);
 			
 				// set uniforms
-				//freiChenShader.setFloat("edgeThreshold", 0.03f);
-				//sobelShader.setFloat("edgeThreshold", 0.03f);
-				/*sobelShader.setFloat("_OutlineThickness", 1.0f);
-				sobelShader.setFloat("_OutlineDepthMultiplier", 1.0f);
-				sobelShader.setFloat("_OutlineDepthBias", 1.0f);
-				sobelShader.setFloat("_OutlineNormalMultiplier", 1.0f);
-				sobelShader.setFloat("_OutlineNormalBias", 10.0f);*/
 				sobelShader.setVec4("_OutlineColor", 0.0f, 0.0f, 0.0f, 1.0f);
 				sobelShader.setFloat("depthThreshold", 0.04f);
 				sobelShader.setFloat("normalThreshold", 0.085f);
@@ -546,9 +537,9 @@ int main(int argc, char** argv)
 
 		default: // Phong shader
 			rotationPaused = true;
-			//texturesToggle = false;
 
 			phongShader.use();
+
 			// set uniforms
 			phongShader.setMat4("model", modelMatrix);
 			phongShader.setMat3("normalMatrix", normalMatrix);
@@ -556,7 +547,7 @@ int main(int argc, char** argv)
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
 			phongShader.setVec3("viewPos", camera.Position);
-			//phongShader.setBool("texturesToggle", texturesToggle);
+
 			// render model
 			modelToRender->Draw(phongShader);
 		}
@@ -569,6 +560,7 @@ int main(int argc, char** argv)
 			normalShader.setMat4("projection", projection);
 			normalShader.setMat4("view", view);
 			normalShader.setMat4("model", modelMatrix);
+
 			// render model
 			modelToRender->Draw(normalShader);
 		}
@@ -706,7 +698,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS) // toon shading
 	{
 		activeShaderID = 1;
-		//texturesToggle = true;
 	}
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS) // Gooch shading
 	{
@@ -719,7 +710,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS) // Phong shading
 	{
 		activeShaderID = 4;
-		//texturesToggle = true;
 	}
 	if (key == GLFW_KEY_N && action == GLFW_PRESS) // toggle normal vectors
 		displayNormals = !displayNormals;
@@ -772,8 +762,6 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 
 	// get default textures
 	int width, height, nrChannels;
-	//unsigned char* whiteTexture = stbi_load("Textures/white.png", &width, &height, &nrChannels, 0);
-	//unsigned char* blackTexture = stbi_load("Textures/black.png", &width, &height, &nrChannels, 0);
 
 	// generate texture buffers
 	for (int i = 0; i < (*textures).size(); i++)
@@ -782,10 +770,7 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *(*textures)[i]);
 
-			//if (i == 0) // if image texture
 			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, numSamples, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
-			//else
-			//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, blackTexture);
 
 			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -796,9 +781,6 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 		else
 		{
 			glBindTexture(GL_TEXTURE_2D, *(*textures)[i]);
-
-			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, whiteTexture);
 
 			if (mipmap) // create mipmaps for hatching textures
 			{
@@ -815,7 +797,6 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 			}
 			
-			//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
