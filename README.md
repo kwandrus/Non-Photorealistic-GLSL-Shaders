@@ -40,7 +40,7 @@ Use the scroll wheel to zoom in and out.
   <img src="./Results/ToonShading.gif"/>
 </p>  
 
-A simple toon fragment shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
+A simple toon shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
 ```glsl
 float diffuse = dot(normal, lightDir);
 float diffuseToon = max(ceil(diffuse * float(colorSteps)) / float(colorSteps), 0.0);
@@ -65,7 +65,7 @@ Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob
   <img src="./Results/PencilHatchingFinal.gif"/>
 </p>  
 
-Following [this real-time hatching paper,](http://hhoppe.com/hatching.pdf) I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
+Following [this](http://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
   
 One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model, primarily seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
 
