@@ -363,3 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 /Shaders/SobelFilter.frag
 /Results/PencilHatching2.gif
+/Results/GoochShading2.gif
+/Results/GoochShading3.gif
+/Results/PencilHatching3.gif
+/Results/ToonShading2.gif
+/Results/ToonShading3.gif

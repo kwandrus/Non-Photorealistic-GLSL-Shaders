@@ -34,7 +34,7 @@ const unsigned int SCR_HEIGHT = 600;
 int numSamples = 4;
 int activeShaderID = 0; // default - phong shader
 bool displayNormals = false;
-bool texturesToggle = true;
+//bool texturesToggle = true;
 std::vector<Model*> modelsList;
 int vectorIndex = 0;
 Model* modelToRender;
@@ -51,15 +51,16 @@ bool firstMouse = true;
 float currentFrame = 0.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-bool paused = true;
+bool rotationPaused = true;
 float rotationTime = 0.0f;
 
 // lighting
-glm::vec3 lightPos(3.0f, 4.0f, 2.0f);
-float lightSourceFrame = 0.0f;
+glm::vec3 LIGHTPOS = glm::vec3(3.0f, 4.0f, 2.64575f);
+float lightSourceFrame, LSF = 1.69612f; // original position of light in its circular path
 float lightSourceVelocity = 2.0f;
 float lightPathRadius = 4.0f;
 float directionFlip = 1.0f;
+bool lightPaused = true;
 
 
 int main(int argc, char** argv)
@@ -329,6 +330,9 @@ int main(int argc, char** argv)
 	float fpsTimer = glfwGetTime();
 	int numFrames = 0, numFramesToDisplay = 0;
 
+	glm::vec3 lightPos = LIGHTPOS;
+	lightSourceFrame = LSF;
+
 	// render loop
 	// -----------------------------------
 	while (!glfwWindowShouldClose(window))
@@ -362,9 +366,15 @@ int main(int argc, char** argv)
 		//modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
 		
-		if (!paused)
-			rotationTime = (float)glfwGetTime();
-		modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		if (!rotationPaused)
+			rotationTime = rotationTime + deltaTime * directionFlip;
+			//rotationTime = (float)glfwGetTime();
+
+		if (activeShaderID == 2)
+			modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		else
+			rotationTime = 0.0f;
+
 		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
 		// store the projection matrix
@@ -379,6 +389,8 @@ int main(int argc, char** argv)
 		switch (activeShaderID)
 		{
 		case 1: // toon shader
+			rotationPaused = true;
+
 			toonShader.use();
 			// set uniforms
 			toonShader.setMat4("model", modelMatrix);
@@ -387,12 +399,16 @@ int main(int argc, char** argv)
 			toonShader.setVec3("viewPos", camera.Position);
 			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			toonShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
-			toonShader.setBool("texturesToggle", texturesToggle);
+			//toonShader.setBool("texturesToggle", texturesToggle);
 			// render model
 			modelToRender->Draw(toonShader);
 			break;
 
 		case 2: // Gooch shader
+			lightPaused = true;
+			lightPos = LIGHTPOS;
+			lightSourceFrame = LSF;
+
 			glBindFramebuffer(GL_FRAMEBUFFER, goochFBO);
 				glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
@@ -499,6 +515,8 @@ int main(int argc, char** argv)
 			break;
 
 		case 3: // hatching shader
+			rotationPaused = true;
+
 			hatchingShader.use();
 
 			// activate textures
@@ -527,7 +545,9 @@ int main(int argc, char** argv)
 			break;
 
 		default: // Phong shader
-			texturesToggle = false;
+			rotationPaused = true;
+			//texturesToggle = false;
+
 			phongShader.use();
 			// set uniforms
 			phongShader.setMat4("model", modelMatrix);
@@ -536,7 +556,7 @@ int main(int argc, char** argv)
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
 			phongShader.setVec3("viewPos", camera.Position);
-			phongShader.setBool("texturesToggle", texturesToggle);
+			//phongShader.setBool("texturesToggle", texturesToggle);
 			// render model
 			modelToRender->Draw(phongShader);
 		}
@@ -557,12 +577,12 @@ int main(int argc, char** argv)
 		// -----------------------------------
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		/*if (!paused)
+		if (!lightPaused)
 		{
 			lightSourceFrame = lightSourceFrame + deltaTime * directionFlip;
 			lightPos.x = sin(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
 			lightPos.z = cos(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
-		}*/
+		}
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, lightPos);
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // a smaller cube
@@ -591,7 +611,8 @@ int main(int argc, char** argv)
 	}
 
 	// deallocate all resources
-	//glDeleteTextures(3, renderTargets);
+	// -----------------------------------
+	// drivers automatically handle releasing texture storage
 	glDeleteVertexArrays(1, &lightSourceVAO);
 	glDeleteVertexArrays(1, &quadVAO);
 	glDeleteVertexArrays(1, &textVAO);
@@ -646,21 +667,39 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// light movement
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
-		paused = !paused;
+		if (activeShaderID == 2) // Gooch shading
+		{
+			rotationPaused = !rotationPaused;
+			lightPaused = true;
+		}
+		else
+		{
+			lightPaused = !lightPaused;
+			rotationPaused = true;
+		}
 	}
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) // rotate light counter-clockwise
 	{
-		paused = false;
+		if (activeShaderID == 2) // Gooch shading
+			rotationPaused = false;
+		else
+			lightPaused = false;
 		directionFlip = 1.0f;
 	}
 	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) // rotate light clockwise
 	{
-		paused = false;
+		if (activeShaderID == 2) // Gooch shading
+			rotationPaused = false;
+		else
+			lightPaused = false;
 		directionFlip = -1.0f;
 	}
 	if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_RELEASE)
 	{
-		paused = true;
+		if (activeShaderID == 2) // Gooch shading
+			rotationPaused = true;
+		else
+			lightPaused = true;
 	}
 
 	// shaders
@@ -680,7 +719,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS) // Phong shading
 	{
 		activeShaderID = 4;
-		texturesToggle = true;
+		//texturesToggle = true;
 	}
 	if (key == GLFW_KEY_N && action == GLFW_PRESS) // toggle normal vectors
 		displayNormals = !displayNormals;

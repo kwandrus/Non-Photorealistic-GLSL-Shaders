@@ -85,6 +85,7 @@ public:
         WorldUp = OriginalInfo[1];
         Yaw = OriginalInfo[2][0];
         Pitch = OriginalInfo[2][1];
+        Zoom = ZOOM;
         updateCameraVectors();
     }
 
