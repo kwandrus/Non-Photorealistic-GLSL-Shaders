@@ -15,14 +15,14 @@ Use the scroll wheel to zoom in and out.
 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move the camera forward, backward, left, right.  
 <kbd>Q</kbd><kbd>E</kbd> - Move the camera up and down.  
 <kbd>R</kbd> - Reset the camera to its original zoom and position.  
-<kbd>Space</kbd> - Automatically rotate the light around the model. Toggle on/off. Gooch Shading: Automatically rotate the model around its Y-axis.  
-<kbd>←</kbd><kbd>→</kbd> - Manually rotate the light around the model either clockwise or counter-clockwise. Gooch Shading: Manually rotate the model around its Y-axis.  
+<kbd>Space</kbd> - Automatically rotate the light around the teapot. Toggle on/off. Gooch Shading: Automatically rotate the teapot around its Y-axis.  
+<kbd>←</kbd><kbd>→</kbd> - Manually rotate the light around the teapot either clockwise or counter-clockwise. Gooch Shading: Manually rotate the teapot around its Y-axis.  
   
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
 <kbd>3</kbd> - Cross-Hatching.  
 <kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
-<kbd>N</kbd> - Display the normal vectors on the model. Toggle on/off. Doesn't work with Gooch Shading.  
+<kbd>N</kbd> - Display the normal vectors on the teapot. Toggle on/off. Doesn't work with Gooch Shading.  
 
 ## Implementation
 
@@ -55,7 +55,7 @@ vec3 toonColor = diffuseToon * lightColor * objectColor;
 
 [Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
   
-I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth textures to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still present in the edge detection though, so it still needs to be refined. I think I need to adjust the detection threshold for discontinuities as the zoom value changes, since it seems to improve as you zoom in.
+I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth textures to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still present in the edge detection though, so it still needs to be refined. I think I need to adjust the detection threshold for discontinuities as the zoom value changes, since it seems to improve as you zoom or dolly in.
   
 Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
@@ -67,7 +67,7 @@ Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob
 
 Following [this](http://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
   
-One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model, primarily seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
+One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
 
 ## References
 
