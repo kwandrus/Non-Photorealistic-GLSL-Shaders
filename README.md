@@ -1,7 +1,7 @@
 # Non-Photorealistic GLSL Shaders
 
 An OpenGL program that showcases non-photorealistic rendering (NPR) techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
-and pencil hatching.
+and cross-hatching.
 
 ## Input Controls
 
@@ -20,7 +20,7 @@ Use the scroll wheel to zoom in and out.
   
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
-<kbd>3</kbd> - Pencil Hatching.  
+<kbd>3</kbd> - Cross-Hatching.  
 <kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
 <kbd>N</kbd> - Display the normal vectors on the model. Toggle on/off. Doesn't work with Gooch Shading.  
 
@@ -59,7 +59,7 @@ I use two rendering passes in my implementation. The first pass computes the coo
   
 Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
-### Pencil Hatching
+### Cross-Hatching
 
 <p align="center">
   <img src="./Results/PencilHatchingFinal.gif"/>
@@ -92,7 +92,7 @@ https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
 https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/  
 https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge-detection-filter  
   
-### Pencil Hatching
+### Cross-Hatching
 http://hhoppe.com/hatching.pdf  
 http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html  
 https://sites.google.com/site/cs7490finalrealtimehatching/home
