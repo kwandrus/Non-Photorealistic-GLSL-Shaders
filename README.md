@@ -55,7 +55,7 @@ vec3 toonColor = diffuseToon * lightColor * objectColor;
 
 [Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
   
-I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still clearly present in the edge detection though, but it seems to improve a bit the more you zoom in.  
+I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still present in the edge detection though, so it still needs refinement.
   
 Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
