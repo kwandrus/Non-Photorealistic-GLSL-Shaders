@@ -43,7 +43,7 @@ Use the scroll wheel to zoom in and out.
 A simple toon shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
 ```glsl
 float diffuse = dot(normal, lightDir);
-float diffuseToon = max(ceil(diffuse * float(colorSteps)) / float(colorSteps), 0.0);
+float diffuseToon = max(ceil(diffuse * float(numColorSteps)) / float(numColorSteps), 0.0);
 vec3 toonColor = diffuseToon * lightColor * objectColor;
 ```
 
