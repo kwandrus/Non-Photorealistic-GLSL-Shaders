@@ -21,7 +21,7 @@ Use the scroll wheel to zoom in and out.
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
 <kbd>3</kbd> - Cross-Hatching.  
-<kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
+<kbd>4</kbd> - Phong shading. (Included as the default shader)  
 <kbd>N</kbd> - Display the normal vectors on the teapot. Toggle on/off. Doesn't work with Gooch Shading.  
 
 ## Implementation
