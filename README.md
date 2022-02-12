@@ -1,7 +1,7 @@
 # Non-Photorealistic GLSL Shaders
 
 An OpenGL program that showcases non-photorealistic rendering (NPR) techniques in real time, including toon/cel shading, Gooch shading (technical illustration), 
-and pencil hatching.
+and cross-hatching.
 
 ## Input Controls
 
@@ -15,14 +15,14 @@ Use the scroll wheel to zoom in and out.
 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move the camera forward, backward, left, right.  
 <kbd>Q</kbd><kbd>E</kbd> - Move the camera up and down.  
 <kbd>R</kbd> - Reset the camera to its original zoom and position.  
-<kbd>Space</kbd> - Automatically rotate the light around the model. Toggle on/off. Gooch Shading: Automatically rotate the model around its Y-axis.  
-<kbd>←</kbd><kbd>→</kbd> - Manually rotate the light around the model either clockwise or counter-clockwise. Gooch Shading: Manually rotate the model around its Y-axis.  
+<kbd>Space</kbd> - Automatically rotate the light around the teapot. Toggle on/off. Gooch Shading: Automatically rotate the teapot around its Y-axis.  
+<kbd>←</kbd><kbd>→</kbd> - Manually rotate the light around the teapot either clockwise or counter-clockwise. Gooch Shading: Manually rotate the teapot around its Y-axis.  
   
 <kbd>1</kbd> - Toon Shading.  
 <kbd>2</kbd> - Gooch Shading.  
-<kbd>3</kbd> - Pencil Hatching.  
-<kbd>4</kbd> - Phong shading. (Not 'non-photorealistic,' but included as the default shader)  
-<kbd>N</kbd> - Display the normal vectors on the model. Toggle on/off. Doesn't work with Gooch Shading.  
+<kbd>3</kbd> - Cross-Hatching.  
+<kbd>4</kbd> - Phong shading. (Included as the default shader)  
+<kbd>N</kbd> - Display the normal vectors on the teapot. Toggle on/off. Doesn't work with Gooch Shading.  
 
 ## Implementation
 
@@ -40,11 +40,11 @@ Use the scroll wheel to zoom in and out.
   <img src="./Results/ToonShading.gif"/>
 </p>  
 
-A simple toon fragment shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
+A simple toon shader that computes the diffuse light intensity using the Phong lighting model and creates the color steps using the ceil function:  
 ```glsl
-float diff = dot(norm, lightDir);
-float diffToon = max(ceil(diff * float(colorSteps)) / float(colorSteps), 0.0);
-vec3 toonColor = diffToon * lightColor * objectColor;
+float diffuse = dot(normal, lightDir);
+float diffuseToon = max(ceil(diffuse * float(numColorSteps)) / float(numColorSteps), 0.0);
+vec3 toonColor = diffuseToon * lightColor * objectColor;
 ```
 
 ### Gooch Shading
@@ -55,19 +55,19 @@ vec3 toonColor = diffToon * lightColor * objectColor;
 
 [Gooch shading](https://users.cs.northwestern.edu/~bgooch/PDFs/gooch98.pdf) is a technique designed for technical illustration, where readability of the object is more important than photorealistic accuracy. Since dark shadows can hide fine details in the surface, cool-to-warm shading is used to indicate surface orientation. Edge lines provide divisions between object pieces and specular highlights convey the direction of the light.  
   
-I use 2 rendering passes in my implementation. The first pass computes the Gooch shading and stores the color, normal, and depth images of the scene into 3 separate buffers. In the second pass, I apply the Sobel operator to the normal and depth images to detect silhouette and interior edge lines and then draw the combined result to a quad that covers the screen. Artifacts are still clearly present in the edge detection though, but it seems to improve a bit the more you zoom in.  
+I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth textures to detect silhouette and interior edge lines and then draw the combined result to a white quad that covers the screen. Artifacts are still present in the edge detection though, so it still needs to be refined. I think I need to adjust the detection threshold for discontinuities as the zoom value changes, since it seems to improve as you zoom or dolly in.
   
 Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
-### Pencil Hatching
+### Cross-Hatching
 
 <p align="center">
   <img src="./Results/PencilHatchingFinal.gif"/>
 </p>  
 
-Following [this real-time hatching paper,](http://hhoppe.com/hatching.pdf) I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
+Following [this](http://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the fragment shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
   
-One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the model, primarily seen in the handle and spout. This can be addressed using lapped textures, as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
+One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. This can be addressed using lapped textures as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
 
 ## References
 
@@ -92,7 +92,7 @@ https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
 https://rastergrid.com/blog/2011/01/frei-chen-edge-detector/  
 https://computergraphics.stackexchange.com/questions/3646/opengl-glsl-sobel-edge-detection-filter  
   
-### Pencil Hatching
+### Cross-Hatching
 http://hhoppe.com/hatching.pdf  
 http://kylehalladay.com/blog/tutorial/2017/02/21/Pencil-Sketch-Effect.html  
 https://sites.google.com/site/cs7490finalrealtimehatching/home
