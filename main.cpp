@@ -7,13 +7,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Headers/render_text.h"
-
 #include <stdio.h>
-#include <iostream>23
+#include <iostream>
 #include <vector>
 #include <string>
 
+#include "Headers/window.h"
+#include "Headers/render_text.h"
 #include "Headers/shader.h"
 #include "Headers/filesystem.h"
 #include "Headers/camera.h"
@@ -23,78 +23,47 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processMovement(GLFWwindow* window);
+void processMovement(GLFWwindow* window, CameraInfo* cameraInfo, TimingInfo* timingInfo);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil);
+void configureFBO(Window* window, GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil);
 
-
-// global variables
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-int numSamples = 4;
-int activeShaderID = 0; // default - phong shader
-bool displayNormals = false;
-std::vector<Model*> modelsList;
-int vectorIndex = 0;
-Model* modelToRender;
-std::map<GLchar, Character> Characters;
-
-// camera
-// Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
-Camera camera(0.0f, 5.0f, 10.0f, 0.0f, 1.0f, 0.0f, -90.0f, -20.0f);
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
-// timing
-float currentFrame = 0.0f;
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-bool rotationPaused = true;
-float rotationTime = 0.0f;
-
-// lighting
-glm::vec3 LIGHTPOS = glm::vec3(3.0f, 4.0f, 2.64575f);
-float lightSourceFrame, LSF = 1.69612f; // original position of light in its circular path
-float lightSourceVelocity = 2.0f;
-float lightPathRadius = 4.0f;
-float directionFlip = 1.0f;
-bool lightPaused = true;
 
 
 int main(int argc, char** argv)
 {
 	glfwInit();
 
+	Window* window = new Window();
+
 	// tell GLFW to use OpenGL 3.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	glfwWindowHint(GLFW_SAMPLES, numSamples);
+	glfwWindowHint(GLFW_SAMPLES, window->getNumSamples());
 
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
 	// create window
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Shaders", NULL, NULL);
-	if (window == NULL)
+	//GLFWwindow* window = glfwCreateWindow(instance->getWidth(), instance->getHeight(), "Shaders", NULL, NULL);
+	if (window->getGLFWWindow() == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetKeyCallback(window, key_callback);
+	glfwMakeContextCurrent(window->getGLFWWindow());
+	glfwSetFramebufferSizeCallback(window->getGLFWWindow(), framebuffer_size_callback);
+	glfwSetCursorPosCallback(window->getGLFWWindow(), mouse_callback);
+	glfwSetScrollCallback(window->getGLFWWindow(), scroll_callback);
+	glfwSetKeyCallback(window->getGLFWWindow(), key_callback);
 
 	// tell GLFW to capture our mouse
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window->getGLFWWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+	glfwSetInputMode(window->getGLFWWindow(), GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	// initialize glad: load all OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -133,11 +102,10 @@ int main(int argc, char** argv)
 	Model backpackModel(FileSystem::getPath("Models/Backpack/backpack.obj"));
 	Model bunnyModel(FileSystem::getPath("Models/StanfordBunny.obj"));
 	//Model ourModel(FileSystem::getPath("Models/Ravenors-Reading Corner/Ravenors-Reading Corner.obj"));
-	modelsList.push_back(&teapotModel);
-	modelsList.push_back(&backpackModel);
-	modelsList.push_back(&bunnyModel);
 
-	modelToRender = modelsList[0];
+	window->addModel(&teapotModel);
+	window->addModel(&backpackModel);
+	window->addModel(&bunnyModel);
 
 	float lightSourceVertices[] = { // cube
 		-0.5f, -0.5f, -0.5f,
@@ -248,7 +216,7 @@ int main(int argc, char** argv)
 	renderTargetsMSAA.push_back(&normalTextureMSAA);
 	glGenTextures(1, &depthTextureMSAA);
 	renderTargetsMSAA.push_back(&depthTextureMSAA);
-	configureFBO(&goochFBO, &renderTargetsMSAA, true, false, true);
+	configureFBO(window, &goochFBO, &renderTargetsMSAA, true, false, true);
 
 	GLuint intermediateFBO, imageTexture, normalTexture, depthTexture;
 	vector<GLuint*> intermediateRenderTargets;
@@ -258,7 +226,7 @@ int main(int argc, char** argv)
 	intermediateRenderTargets.push_back(&normalTexture);
 	glGenTextures(1, &depthTexture);
 	intermediateRenderTargets.push_back(&depthTexture);
-	configureFBO(&intermediateFBO, &intermediateRenderTargets, false, false, false);
+	configureFBO(window, &intermediateFBO, &intermediateRenderTargets, false, false, false);
 
 	GLuint hatchingFBO, hatching0, hatching1, hatching2, hatching3, hatching4, hatching5;
 	vector<GLuint*> hatchingRenderTargets; // G buffers
@@ -274,7 +242,7 @@ int main(int argc, char** argv)
 	hatchingRenderTargets.push_back(&hatching4);
 	glGenTextures(1, &hatching5);
 	hatchingRenderTargets.push_back(&hatching5);
-	configureFBO(&hatchingFBO, &hatchingRenderTargets, false, true, false);
+	configureFBO(window, &hatchingFBO, &hatchingRenderTargets, false, true, false);
 
 
 	// assign render targets for goochFBO and intermediateFBO
@@ -290,7 +258,7 @@ int main(int argc, char** argv)
 
 	// set up FreeType
 	// -----------------------------------
-	int returnVal = SetUpFreeType(&Characters);
+	int returnVal = SetUpFreeType(&(window->screenText));
 	if (returnVal != 0)
 	{
 		return returnVal;
@@ -307,7 +275,7 @@ int main(int argc, char** argv)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
+	glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(window->getWidth()), 0.0f, static_cast<float>(window->getHeight()));
 
 
 	// shader configuration
@@ -329,21 +297,21 @@ int main(int argc, char** argv)
 	float fpsTimer = glfwGetTime();
 	int numFrames = 0, numFramesToDisplay = 0;
 
-	glm::vec3 lightPos = LIGHTPOS;
-	lightSourceFrame = LSF;
+	glm::vec3 lightPos = window->getLightingInfo()->getLIGHTPOS();
+	float lightSourceFrame = window->getLightingInfo()->getCurrentLightSourcePosition();
 
 	// render loop
 	// -----------------------------------
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window->getGLFWWindow()))
 	{
 		// per-frame time logic
 		// --------------------
-		currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		window->getTimingInfo()->setCurrentFrame(glfwGetTime());
+		window->getTimingInfo()->setDeltaTime();
+		window->getTimingInfo()->setLastFrame(window->getTimingInfo()->getCurrentFrame());
 
 		//processInput(window, &modelToRender);
-		processMovement(window);
+		processMovement(window->getGLFWWindow(), window->getCameraInfo(), window->getTimingInfo());
 
 		// render
 		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -352,7 +320,7 @@ int main(int argc, char** argv)
 
 		// set the view matrix in the uniform block - we only have to do this once per loop iteration.
 		// -----------------------------------
-		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 view = (window->getCameraInfo()->getCamera())->GetViewMatrix();
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -364,29 +332,35 @@ int main(int argc, char** argv)
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f));
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
 		
-		if (!rotationPaused)
-			rotationTime = rotationTime + deltaTime * directionFlip;
+		if (!window->getTimingInfo()->isRotationPaused())
+		{
+			window->getTimingInfo()->setRotationTime(window->getTimingInfo()->getRotationTime() + window->getTimingInfo()->getDeltaTime() * window->getLightingInfo()->getDirectionFlip());
+		}
 
-		if (activeShaderID == 2)
-			modelMatrix = glm::rotate(modelMatrix, rotationTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		if (window->getActiveShaderID() == 2)
+		{
+			modelMatrix = glm::rotate(modelMatrix, window->getTimingInfo()->getRotationTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		}
 		else
-			rotationTime = 0.0f;
+		{
+			window->getTimingInfo()->setRotationTime(0.0f);
+		}
 
 		glm::mat3 normalMatrix = glm::mat3(transpose(inverse(modelMatrix)));
 
 		// store the projection matrix
 		// -----------------------------------
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians((window->getCameraInfo()->getCamera())->Zoom), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100.0f);
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		// activate shader before setting uniforms
 		// -----------------------------------
-		switch (activeShaderID)
+		switch (window->getActiveShaderID())
 		{
 		case 1: // toon shader
-			rotationPaused = true;
+			window->getTimingInfo()->setRotationPaused(true);
 
 			toonShader.use();
 
@@ -394,18 +368,18 @@ int main(int argc, char** argv)
 			toonShader.setMat4("model", modelMatrix);
 			toonShader.setMat3("normalMatrix", normalMatrix);
 			toonShader.setVec3("lightPos", lightPos);
-			toonShader.setVec3("viewPos", camera.Position);
+			toonShader.setVec3("viewPos", (window->getCameraInfo()->getCamera())->Position);
 			toonShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			toonShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
 
 			// render model
-			modelToRender->Draw(toonShader);
+			window->getModelToRender()->Draw(toonShader);
 			break;
 
 		case 2: // Gooch shader
-			lightPaused = true;
-			lightPos = LIGHTPOS;
-			lightSourceFrame = LSF;
+			window->getLightingInfo()->setLightPaused(true);
+			lightPos = window->getLightingInfo()->getLIGHTPOS();
+			lightSourceFrame = window->getLightingInfo()->getCurrentLightSourcePosition();
 
 			glBindFramebuffer(GL_FRAMEBUFFER, goochFBO);
 				glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
@@ -441,7 +415,7 @@ int main(int argc, char** argv)
 				goochShader.setMat4("model", modelMatrix);
 				goochShader.setMat3("normalMatrix", normalMatrix);
 				goochShader.setVec3("lightPos", lightPos);
-				goochShader.setVec3("viewPos", camera.Position);
+				goochShader.setVec3("viewPos", (window->getCameraInfo()->getCamera())->Position);
 				goochShader.setVec3("coolColor", 0.0f, 0.0f, 0.8f);
 				goochShader.setVec3("warmColor", 0.4f, 0.4f, 0.0f);
 				goochShader.setVec3("objectColor", 1.0f, 1.0f, 1.0f);
@@ -451,7 +425,7 @@ int main(int argc, char** argv)
 				goochShader.setFloat("beta", 0.5f);
 
 				// render model
-				modelToRender->Draw(goochShader);
+				window->getModelToRender()->Draw(goochShader);
 
 			// now blit multisampled buffer(s) to G intermediateFBO's G buffers
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, goochFBO);
@@ -462,13 +436,13 @@ int main(int argc, char** argv)
 				// the resulting texture is anti-aliased
 				glReadBuffer(GBuffers[0]); // image
 				glDrawBuffer(GBuffers[0]);
-				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, window->getWidth(), window->getHeight(), 0, 0, window->getWidth(), window->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				glReadBuffer(GBuffers[1]); // normal
 				glDrawBuffer(GBuffers[1]);
-				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, window->getWidth(), window->getHeight(), 0, 0, window->getWidth(), window->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				glReadBuffer(GBuffers[2]); // depth
 				glDrawBuffer(GBuffers[2]);
-				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, window->getWidth(), window->getHeight(), 0, 0, window->getWidth(), window->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				
 			// Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
 			// bind back to default framebuffer and draw a quad plane with the attached framebuffer color textures
@@ -506,7 +480,7 @@ int main(int argc, char** argv)
 			break;
 
 		case 3: // hatching shader
-			rotationPaused = true;
+			window->getTimingInfo()->setRotationPaused(true);
 
 			hatchingShader.use();
 
@@ -528,15 +502,15 @@ int main(int argc, char** argv)
 			hatchingShader.setMat4("model", modelMatrix);
 			hatchingShader.setMat3("normalMatrix", normalMatrix);
 			hatchingShader.setVec3("lightPos", lightPos);
-			hatchingShader.setVec3("viewPos", camera.Position);
+			hatchingShader.setVec3("viewPos", (window->getCameraInfo()->getCamera())->Position);
 			hatchingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
 			// render model
-			modelToRender->Draw(hatchingShader);
+			window->getModelToRender()->Draw(hatchingShader);
 			break;
 
 		default: // Phong shader
-			rotationPaused = true;
+			window->getTimingInfo()->setRotationPaused(true);
 
 			phongShader.use();
 
@@ -546,14 +520,14 @@ int main(int argc, char** argv)
 			phongShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 			phongShader.setVec3("lightPos", lightPos);
 			phongShader.setVec3("objectColor", 1.0f, 0.5f, 0.5f);
-			phongShader.setVec3("viewPos", camera.Position);
+			phongShader.setVec3("viewPos", (window->getCameraInfo()->getCamera())->Position);
 
 			// render model
-			modelToRender->Draw(phongShader);
+			window->getModelToRender()->Draw(phongShader);
 		}
 
 
-		if (displayNormals)
+		if (window->getNormalsDisplaySetting())
 		{
 			// draw model with normal visualizing geometry shader
 			normalShader.use();
@@ -562,18 +536,18 @@ int main(int argc, char** argv)
 			normalShader.setMat4("model", modelMatrix);
 
 			// render model
-			modelToRender->Draw(normalShader);
+			window->getModelToRender()->Draw(normalShader);
 		}
 
 		// render the light source
 		// -----------------------------------
 		lightSourceShader.use();
 		// rotate light around y axis of the displayed object at the origin
-		if (!lightPaused)
+		if (!window->getLightingInfo()->isLightPaused())
 		{
-			lightSourceFrame = lightSourceFrame + deltaTime * directionFlip;
-			lightPos.x = sin(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
-			lightPos.z = cos(lightSourceFrame / lightSourceVelocity) * lightPathRadius;
+			lightSourceFrame = lightSourceFrame + window->getTimingInfo()->getDeltaTime() * window->getLightingInfo()->getDirectionFlip();
+			lightPos.x = sin(lightSourceFrame / window->getLightingInfo()->getLightSourceVelocity()) * window->getLightingInfo()->getLightPathRadius();
+			lightPos.z = cos(lightSourceFrame / window->getLightingInfo()->getLightSourceVelocity()) * window->getLightingInfo()->getLightPathRadius();
 		}
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, lightPos);
@@ -587,7 +561,7 @@ int main(int argc, char** argv)
 		renderTextShader.use();
 		renderTextShader.setMat4("projection", textProjection);
 		numFrames++;
-		if (currentFrame - fpsTimer >= 1.0f)
+		if (window->getTimingInfo()->getCurrentFrame() - fpsTimer >= 1.0f)
 		{
 			numFramesToDisplay = numFrames;
 			numFrames = 0;
@@ -595,16 +569,15 @@ int main(int argc, char** argv)
 		}
 		// print FPS on screen
 		std::string fpsText = std::string("FPS: ") + std::to_string(numFramesToDisplay);
-		RenderText(renderTextShader, fpsText.c_str(), Characters, textVAO, textVBO, 25.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.0f, 0.0f));
+		RenderText(renderTextShader, fpsText.c_str(), window->screenText, textVAO, textVBO, 25.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.0f, 0.0f));
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwPollEvents();
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(window->getGLFWWindow());
 	}
 
 	// deallocate all resources
 	// -----------------------------------
-	// drivers automatically handle releasing texture storage
 	glDeleteVertexArrays(1, &lightSourceVAO);
 	glDeleteVertexArrays(1, &quadVAO);
 	glDeleteVertexArrays(1, &textVAO);
@@ -618,6 +591,21 @@ int main(int argc, char** argv)
 	glDeleteFramebuffers(1, &intermediateFBO);
 	glDeleteFramebuffers(1, &hatchingFBO);
 
+	glDeleteTextures(1, &imageTextureMSAA);
+	glDeleteTextures(1, &normalTextureMSAA);
+	glDeleteTextures(1, &depthTextureMSAA);
+	glDeleteTextures(1, &imageTexture);
+	glDeleteTextures(1, &normalTexture);
+	glDeleteTextures(1, &depthTexture);
+	glDeleteTextures(1, &hatching0);
+	glDeleteTextures(1, &hatching1);
+	glDeleteTextures(1, &hatching2);
+	glDeleteTextures(1, &hatching3);
+	glDeleteTextures(1, &hatching4);
+	glDeleteTextures(1, &hatching5);
+
+	delete window;
+
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	glfwTerminate();
 	return 0;
@@ -630,91 +618,125 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void processMovement(GLFWwindow* window)
+void processMovement(GLFWwindow* window, CameraInfo* cameraInfo, TimingInfo* timingInfo)
 {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(FORWARD, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(BACKWARD, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(LEFT, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(RIGHT, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-		camera.ProcessKeyboard(UP, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(UP, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		camera.ProcessKeyboard(DOWN, deltaTime);
+	{
+		(cameraInfo->getCamera())->ProcessKeyboard(DOWN, timingInfo->getDeltaTime());
+	}
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-		camera.ResetCamera();
+	{
+		(cameraInfo->getCamera())->ResetCamera();
+	}
 }
 
 
 //void processInput(GLFWwindow* window, Model** modelToRender)
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+	Window* myWindow = (Window*)glfwGetWindowUserPointer(window);
 
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, true);
+	}
 
 	// light movement
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
-		if (activeShaderID == 2) // Gooch shading
+		if (myWindow->getActiveShaderID() == 2) // Gooch shading
 		{
-			rotationPaused = !rotationPaused;
-			lightPaused = true;
+			myWindow->getTimingInfo()->setRotationPaused(!myWindow->getTimingInfo()->isRotationPaused());
+			myWindow->getLightingInfo()->setLightPaused(true);
 		}
 		else
 		{
-			lightPaused = !lightPaused;
-			rotationPaused = true;
+			myWindow->getLightingInfo()->setLightPaused(!myWindow->getLightingInfo()->isLightPaused());
+			myWindow->getTimingInfo()->setRotationPaused(true);
 		}
 	}
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) // rotate light counter-clockwise
 	{
-		if (activeShaderID == 2) // Gooch shading
-			rotationPaused = false;
+		if (myWindow->getActiveShaderID() == 2) // Gooch shading
+		{
+			myWindow->getTimingInfo()->setRotationPaused(false);
+		}
 		else
-			lightPaused = false;
-		directionFlip = 1.0f;
+		{
+			myWindow->getLightingInfo()->setLightPaused(false);
+		}
+		myWindow->getLightingInfo()->setDirectionFlip(1.0f);
 	}
 	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) // rotate light clockwise
 	{
-		if (activeShaderID == 2) // Gooch shading
-			rotationPaused = false;
+		if (myWindow->getActiveShaderID() == 2) // Gooch shading
+		{
+			myWindow->getTimingInfo()->setRotationPaused(false);
+		}
 		else
-			lightPaused = false;
-		directionFlip = -1.0f;
+		{
+			myWindow->getLightingInfo()->setLightPaused(false);
+		}
+		myWindow->getLightingInfo()->setDirectionFlip(-1.0f);
 	}
 	if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_RELEASE)
 	{
-		if (activeShaderID == 2) // Gooch shading
-			rotationPaused = true;
+		if (myWindow->getActiveShaderID() == 2) // Gooch shading
+		{
+			myWindow->getTimingInfo()->setRotationPaused(true);
+		}
 		else
-			lightPaused = true;
+		{
+			myWindow->getLightingInfo()->setLightPaused(true);
+		}
 	}
 
 	// shaders
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS) // toon shading
 	{
-		activeShaderID = 1;
+		myWindow->setActiveShaderID(1);
 	}
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS) // Gooch shading
 	{
-		activeShaderID = 2;
+		myWindow->setActiveShaderID(2);
 	}
 	if (key == GLFW_KEY_3 && action == GLFW_PRESS) // hatching
 	{
-		activeShaderID = 3;
+		myWindow->setActiveShaderID(3);
 	}
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS) // Phong shading
 	{
-		activeShaderID = 4;
+		myWindow->setActiveShaderID(4);
 	}
 	if (key == GLFW_KEY_N && action == GLFW_PRESS) // toggle normal vectors
-		displayNormals = !displayNormals;
+	{
+		myWindow->flipNormalsDisplaySetting();
+	}
 
-	/*if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
+	/*
+	use linked list instead of vector
+
+	if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
 	{
 		vectorIndex++;
 
@@ -729,33 +751,34 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (firstMouse)
+	Window* myWindow = (Window*)glfwGetWindowUserPointer(window);
+
+	if (myWindow->getCameraInfo()->getLastX() < 0 || myWindow->getCameraInfo()->getLastY() < 0)
 	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
+		myWindow->getCameraInfo()->setLastX(xpos);
+		myWindow->getCameraInfo()->setLastY(ypos);
 	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+	float xoffset = xpos - myWindow->getCameraInfo()->getLastX();
+	float yoffset = myWindow->getCameraInfo()->getLastY() - ypos; // reversed since y-coordinates go from bottom to top
 
-	lastX = xpos;
-	lastY = ypos;
+	myWindow->getCameraInfo()->setLastX(xpos);
+	myWindow->getCameraInfo()->setLastY(ypos);
 
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	myWindow->getCameraInfo()->getCamera()->ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	//std::cout << "we got here" << std::endl;
-	camera.ProcessMouseScroll(yoffset);
+	Window* myWindow = (Window*)glfwGetWindowUserPointer(window);
+	myWindow->getCameraInfo()->getCamera()->ProcessMouseScroll(yoffset);
 }
 
 // Bind textures and buffers to frame buffer object
 // ----------------------------------------------------------------------
-void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil) {
+void configureFBO(Window* window, GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil) {
 
 	glGenFramebuffers(1, FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
@@ -770,7 +793,7 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *(*textures)[i]);
 
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, numSamples, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, window->getNumSamples(), GL_RGB, window->getWidth(), window->getHeight(), GL_TRUE);
 
 			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -794,7 +817,7 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 			else
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window->getWidth(), window->getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 			}
 			
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -814,16 +837,22 @@ void configureFBO(GLuint* FBO, vector<GLuint*>* textures, bool multisample, bool
 
 		// use a single renderbuffer object for both a depth AND stencil buffer
 		if (multisample)
-			glRenderbufferStorageMultisample(GL_RENDERBUFFER, numSamples, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		{
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, window->getNumSamples(), GL_DEPTH24_STENCIL8, window->getWidth(), window->getHeight());
+		}
 		else
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		{
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window->getWidth(), window->getHeight());
+		}
 		
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
 	}
 	
 	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
 		cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -167,6 +167,7 @@
     <ClInclude Include="Headers\root_directory.h" />
     <ClInclude Include="Headers\shader.h" />
     <ClInclude Include="Headers\stb_image.h" />
+    <ClInclude Include="Headers\window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Hatching.frag" />
