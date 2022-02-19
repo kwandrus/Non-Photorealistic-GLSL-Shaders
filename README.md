@@ -65,9 +65,11 @@ Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob
   <img src="./Results/PencilHatchingFinal.gif"/>
 </p>  
 
-Following [this](http://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the fragment shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
+Following [this](https://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the fragment shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
   
-One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. This can be addressed using lapped textures as described in [this](http://hhoppe.com/lapped.pdf) paper, which I eventually plan on implementing.  
+One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. There are complex algorithms that address this problem, such as these two papers:
+-  [Lapped Textures](https://hhoppe.com/lapped.pdf) by Emil Praun, Adam Finkelstein, and Hugues Hoppe. ACM SIGGRAPH 2000 Proceedings.
+-  [Illustrating Smooth Surfaces](https://cims.nyu.edu/~dzorin/papers/hertzmann2000iss.pdf) by Aaron Hertzmann and Denis Zorin. ACM SIGGRAPH 2000 Proceedings.
 
 ## References
 
