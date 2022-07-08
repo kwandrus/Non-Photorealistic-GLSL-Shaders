@@ -57,7 +57,7 @@ vec3 toonColor = diffuseToon * lightColor * objectColor;
   
 I use two rendering passes in my implementation. The first pass computes the cool-to-warm shading and stores the color, normal, and depth images of the scene into 3 separate textures. In the second pass, I apply the Sobel operator to the normal and depth textures to detect silhouette and interior edge lines and then draw the combined result to a white quad that covers the screen. Artifacts are still present in the edge detection though, so it still needs to be refined. I think I need to adjust the detection threshold for discontinuities as the zoom value changes, since it seems to improve as you zoom or dolly in.
   
-Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) to a still image of the Gooch shader that shows a smoother transition in color compared to the gif.  
+[Here's a still image](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob/master/Results/GoochShading.PNG) of the Gooch shader that shows a smoother transition in color compared to the gif.  
 
 ### Cross-Hatching
 
@@ -67,7 +67,7 @@ Here's a [link](https://github.com/kwandrus/Non-Photorealistic-GLSL-Shaders/blob
 
 Following [this](https://hhoppe.com/hatching.pdf) real-time hatching paper, I construct a tonal art map (TAM) using 6 mip-mapped hatch images corresponding to different tones. In the fragment shader, I first compute the diffuse light intensity using the Phong lighting model and then blend between the 2 hatching tones nearest to that intensity.  
   
-One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. There are complex algorithms that address this problem, such as these two papers:
+One shortcoming of my implementation is that the hatching lines don't adjust to the curvature of the teapot, primarily seen in the handle and spout. Here are a couple papers that provide algorithms to address this problem:
 -  [Lapped Textures](https://hhoppe.com/lapped.pdf) by Emil Praun, Adam Finkelstein, and Hugues Hoppe. ACM SIGGRAPH 2000 Proceedings.
 -  [Illustrating Smooth Surfaces](https://cims.nyu.edu/~dzorin/papers/hertzmann2000iss.pdf) by Aaron Hertzmann and Denis Zorin. ACM SIGGRAPH 2000 Proceedings.
 
